@@ -38,6 +38,8 @@ TODO: how to deploy the project
 ## Authors
 
 Stefel Smith <br>
+Syed Hussaini <br>
+add name
 
 
 ## Acknowledgments
