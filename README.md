@@ -41,6 +41,7 @@ TODO: how to deploy the project
 
 Stefel Smith <br>
 Syed Hussaini <br>
+Victor Sanni <br>
 Julian George <br>
 
 ## Acknowledgments
