@@ -8,6 +8,6 @@ export const foodItemSchema = new mongoose.Schema({
   tags: [String],
 });
 
-const FoodItem = mongoose.model("FoodItem", foodItemSchema);
+// const FoodItem = mongoose.model("FoodItem", foodItemSchema);
 
-export default FoodItem;
+// export default FoodItem;

@@ -1,9 +1,9 @@
-import mongoose from "mongoose";
+import mongoose, { SchemaTypes } from "mongoose";
 import { foodItemSchema } from "./FoodItem.js";
 
 export const inventoryAddActionSchema = new mongoose.Schema({
-  ownerId: { type: Schema.Types.ObjectId, ref: "User" },
-  inventoryId: { type: Schema.Types.ObjectId, ref: "Inventory" },
+  ownerId: { type: SchemaTypes.ObjectId, ref: "User" },
+  inventoryId: { type: SchemaTypes.ObjectId, ref: "Inventory" },
   foodItem: foodItemSchema,
   date: Date,
 });

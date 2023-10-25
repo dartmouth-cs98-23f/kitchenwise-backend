@@ -11,14 +11,13 @@ if (process.env.NODE_ENV !== "production") {
 
 const PORT = process.env.PORT || 3000;
 
-mongoose.connect(process.env.DATABASE_URL, {
-  useNewUrlParser: true,
-});
-
-const db = mongoose.connection;
-
-db.on("error", (error) => console.error(error));
-db.once("open", () => console.log("Connected to Mongoose"));
+mongoose
+  .connect(process.env.DATABASE_URL, {
+    useNewUrlParser: true,
+  })
+  .then(() => {
+    console.log("Connected to MongoDB");
+  });
 
 app.use("/", indexRouter);
 

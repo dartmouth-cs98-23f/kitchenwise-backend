@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { SchemaTypes } from "mongoose";
 import { foodItemSchema } from "./FoodItem.js";
 
 const recipeStageSchema = new mongoose.Schema({
@@ -12,8 +12,8 @@ const recipeStageSchema = new mongoose.Schema({
 const recipeSchema = new mongoose.Schema({
   title: String,
   stages: [recipeStageSchema],
-  ownerId: { type: Schema.Types.ObjectId, ref: "User" },
-  sharedUsers: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  ownerId: { type: SchemaTypes.ObjectId, ref: "User" },
+  sharedUsers: [{ type: SchemaTypes.ObjectId, ref: "User" }],
 });
 
 const Recipe = mongoose.model("Recipe", recipeSchema);
