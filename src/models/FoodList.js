@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { foodItemSchema } from "./FoodItem";
+import { foodItemSchema } from "./FoodItem.js";
 
 // This schema is intended to be used for shopping lists. Has overlap with other models though
 const foodListSchema = new mongoose.Schema({

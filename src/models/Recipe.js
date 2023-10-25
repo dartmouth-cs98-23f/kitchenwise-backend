@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { foodItemSchema } from "./FoodItem";
+import { foodItemSchema } from "./FoodItem.js";
 
 const recipeStageSchema = new mongoose.Schema({
   name: String,

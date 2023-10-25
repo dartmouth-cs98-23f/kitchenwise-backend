@@ -1,28 +1,27 @@
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import indexRouter from "./routes/index.js";
+
+const app = express();
+
 if (process.env.NODE_ENV !== "production") {
-  require("dotenv").config();
+  dotenv.config();
 }
 
-const express = require("express");
-const app = express();
-const expressLayouts = require("express-ejs-layouts");
-const mongoose = require("mongoose");
-const path = require("path");
-
-const indexRouter = require("./routes/index");
-
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-app.set("layout", path.join(__dirname, "./views/layout/layout.ejs"));
-app.use(expressLayouts);
-app.use(express.static("public"));
+const PORT = process.env.PORT || 3000;
 
 mongoose.connect(process.env.DATABASE_URL, {
   useNewUrlParser: true,
 });
+
 const db = mongoose.connection;
+
 db.on("error", (error) => console.error(error));
 db.once("open", () => console.log("Connected to Mongoose"));
 
 app.use("/", indexRouter);
 
-app.listen(process.env.PORT || 3000);
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Listening on port", PORT);
+});

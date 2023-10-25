@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { foodItemSchema } from "./FoodItem";
+import { foodItemSchema } from "./FoodItem.js";
 
 export const inventoryAddActionSchema = new mongoose.Schema({
   ownerId: { type: Schema.Types.ObjectId, ref: "User" },
