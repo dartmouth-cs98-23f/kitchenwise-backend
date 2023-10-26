@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import indexRouter from "./routes/index.js";
 
 const app = express();
+app.use(express.json());
 
 if (process.env.NODE_ENV !== "production") {
   dotenv.config();

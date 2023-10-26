@@ -6,6 +6,7 @@ export const foodItemSchema = new mongoose.Schema({
   // TODO: Should this be an enum?
   unit: String,
   tags: [String],
+  expirationDate: Date,
 });
 
 // const FoodItem = mongoose.model("FoodItem", foodItemSchema);
