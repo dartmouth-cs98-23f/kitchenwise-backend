@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Main server for our kitchen app",
   "main": "src/server.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon src/server.js"
@@ -13,7 +14,9 @@
     "ejs": "^3.1.9",
     "express": "^4.18.2",
     "express-ejs-layouts": "^2.5.1",
-    "mongoose": "^7.6.3"
+    "mongoose": "^7.6.3",
+    "sha1": "^1.1.1",
+    "string-similarity": "^4.0.4"
   },
   "devDependencies": {
     "dotenv": "^16.3.1",
