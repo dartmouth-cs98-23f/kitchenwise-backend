@@ -22,6 +22,13 @@ mongoose
 
 app.use("/", indexRouter);
 
+app.use(function (err, req, res, next) {
+  res
+    .status(err.code || 500)
+    .json({ message: err.message })
+    .end();
+});
+
 app.listen(process.env.PORT || 3000, () => {
   console.log("Listening on port", PORT);
 });
