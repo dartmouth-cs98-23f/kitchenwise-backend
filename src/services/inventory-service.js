@@ -16,7 +16,10 @@ export const locationNameToInventory = async (locationName, userId) => {
   });
   let bestMatch = [0, null];
   for (const inv of inventories) {
-    const currSimilarity = compareTwoStrings(locationName, inv.title);
+    const currSimilarity = compareTwoStrings(
+      locationName.toLowerCase(),
+      inv.title.toLowerCase()
+    );
     if (currSimilarity > Math.max(inventoryNameThreshold, bestMatch[0])) {
       bestMatch = [currSimilarity, inv];
     }
@@ -67,7 +70,10 @@ export const getInventoryFromFood = async (foodItem, userId) => {
   const { foodString: name, quantity: rawQuantity, expirationDate } = foodItem;
   const { quantity, unit } = parseQuantity(rawQuantity);
   const containingInventories = await Inventory.find({
-    foodItems: { $elemMatch: { name, unit, expirationDate } },
+    $and: [
+      { ownerId: new Types.ObjectId(userId) },
+      { foodItems: { $elemMatch: { name, unit, expirationDate } } },
+    ],
   });
   if (containingInventories.length == 0) return null;
   if (containingInventories.length > 1) return containingInventories;

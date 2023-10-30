@@ -44,7 +44,9 @@ foodItemRouter.post("/additem", async (req, res, next) => {
 foodItemRouter.delete("/deleteitem", async (req, res, next) => {
   try {
     const { location, userId, food } = req.body;
-    const foodLocation = location || (await getInventoryFromFood(food, userId));
+    const foodLocation = location
+      ? await locationNameToInventory(location, userId)
+      : await getInventoryFromFood(food, userId);
     if (!foodLocation) {
       return res
         .status(404)
