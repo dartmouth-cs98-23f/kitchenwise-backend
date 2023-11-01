@@ -52,5 +52,4 @@ export const unrevisedAddActionListener = async () => {
     action.status = "UNREVISED";
     await action.save();
   }
-  console.log("Expired addActions", result.modifiedCount);
 };
