@@ -1,15 +1,14 @@
 import { Types } from "mongoose";
 import InventoryAddAction from "../models/InventoryAddAction.js";
-import { getInventoryById } from "./inventory-service.js";
-import { parseQuantity } from "./fooditem-service.js";
+import { addFoodItem } from "./inventory-service.js";
+import { parseFoodItem } from "./fooditem-service.js";
 
 export const createAddAction = async (food, inventoryId, userId) => {
-  const { quantity: rawQuantity, foodString: name } = food;
-  const { quantity, unit } = parseQuantity(rawQuantity);
-  const newFoodItem = { name, quantity, unit };
+  const { quantity, foodString, expirationDate } = food;
+  const newFoodItem = parseFoodItem(quantity, foodString, expirationDate);
   const newAddAction = new InventoryAddAction({
-    ownerId: Types.ObjectId(userId),
-    inventoryId: Types.ObjectId(inventoryId),
+    ownerId: new Types.ObjectId(userId),
+    inventoryId: new Types.ObjectId(inventoryId),
     foodItem: newFoodItem,
     date: new Date(),
   });
@@ -17,28 +16,41 @@ export const createAddAction = async (food, inventoryId, userId) => {
 };
 
 export const confirmAddAction = async (addActionId) => {
-  return await InventoryAddAction.findByIdAndUpdate(
-    addActionId,
-    { status: "CONFIRMED" },
-    { new: true }
-  );
+  const action = await InventoryAddAction.findById(addActionId);
+  await addFoodItem(action.foodItem, action.inventoryId);
+  action.state = "CONFIRMED";
+  return await action.save();
 };
 
-export const reviseAddAction = (addActionId, newFood) => {};
+export const reviseAddAction = async (addActionId, newFood) => {
+  const { quantity, foodString, expirationDate } = newFood;
+  const revisedFoodItem = parseFoodItem(quantity, foodString, expirationDate);
+  const action = await InventoryAddAction.findById(addActionId);
+  action.foodItem = revisedFoodItem;
+  action.status = "REVISED";
+  await addFoodItem(action.foodItem, action.inventoryId);
+  return await action.save();
+};
 
-export const rejectAddAction = (addActionId) => {};
+export const rejectAddAction = async (addActionId) => {
+  const action = await InventoryAddAction.findById(addActionId);
+  action.status = "REJECTED";
+  return await action.save();
+};
 
 // Number of seconds before actions expire
-const actionExpireTime = 30;
+const actionExpireTime = 10;
 
 // This function will add unrevised actions to the inventory after they expire. intended to be run on an interval
 export const unrevisedAddActionListener = async () => {
   const cutOffDate = new Date() - actionExpireTime * 1000;
-  const result = await InventoryAddAction.updateMany(
-    {
-      $and: [{ status: "PENDING" }, { date: { $lt: cutOffDate } }],
-    },
-    { status: "UNREVISED" }
-  );
-  //   console.log("Expired addActions", result.modifiedCount);
+  const expiredActions = await InventoryAddAction.find({
+    $and: [{ status: "PENDING" }, { date: { $lt: cutOffDate } }],
+  });
+  for (const action of expiredActions) {
+    await addFoodItem(action.foodItem, action.inventoryId);
+    action.status = "UNREVISED";
+    await action.save();
+  }
+  console.log("Expired addActions", result.modifiedCount);
 };

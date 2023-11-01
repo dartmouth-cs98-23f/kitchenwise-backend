@@ -29,10 +29,10 @@ foodItemRouter.post("/additem", async (req, res, next) => {
     }
     const addAction = createAddAction(food, targetInventory._id, userId);
     // const updatedInventory = await addFoodItem(food, targetInventory._id);
-    if (updatedInventory) {
+    if (addAction) {
       return res
         .status(200)
-        .json({ location: updatedInventory.title, food })
+        .json({ location: targetInventory.title, food })
         .end();
     } else {
       return res

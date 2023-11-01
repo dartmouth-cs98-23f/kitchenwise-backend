@@ -3,3 +3,13 @@ export const parseQuantity = (rawQuantity) => {
   const unit = rawQuantity.replace(quantity.toString(), "").trim();
   return { quantity, unit };
 };
+
+export const parseFoodItem = (
+  rawQuantity,
+  foodString,
+  expirationDate = null
+) => {
+  const { quantity, unit } = parseQuantity(rawQuantity);
+  const name = foodString;
+  return { quantity, unit, name, expirationDate };
+};
