@@ -1,7 +1,6 @@
 import mongoose, { SchemaTypes } from "mongoose";
 import { foodItemSchema } from "./FoodItem.js";
-
-export const removeReasons = ["TRASH", "USED"];
+import { actionStatuses, removeReasons } from "./enums.js";
 
 export const inventoryRemoveActionSchema = new mongoose.Schema({
   ownerId: { type: SchemaTypes.ObjectId, ref: "User" },
@@ -9,6 +8,7 @@ export const inventoryRemoveActionSchema = new mongoose.Schema({
   foodItem: foodItemSchema,
   date: Date,
   removeReason: { type: String, enum: removeReasons },
+  status: { type: String, enum: actionStatuses, default: "PENDING" },
 });
 
 const InventoryRemoveAction = mongoose.model(

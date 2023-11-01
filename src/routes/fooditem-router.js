@@ -6,12 +6,14 @@ import {
   getInventoryFromFood,
   deleteFoodItem,
 } from "../services/inventory-service.js";
+import { createAddAction } from "../services/addaction-service.js";
 
 // Even though FoodItem isn't a proper model, we give it its own router because these functions interact with many models
 const foodItemRouter = express.Router();
 
 foodItemRouter.post("/additem", async (req, res, next) => {
   try {
+    // current schema of `food` is {quantity: string, foodString:string }
     const { location, userId, food } = req.body;
     let targetInventory = null;
     // TODO: should the default inventory be a fallback if the specified location can't be found?
@@ -25,7 +27,8 @@ foodItemRouter.post("/additem", async (req, res, next) => {
         .status(404)
         .json({ message: `Inventory '${location}' not found.` });
     }
-    const updatedInventory = await addFoodItem(food, targetInventory._id);
+    const addAction = createAddAction(food, targetInventory._id, userId);
+    // const updatedInventory = await addFoodItem(food, targetInventory._id);
     if (updatedInventory) {
       return res
         .status(200)
