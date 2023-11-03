@@ -3,6 +3,15 @@ import InventoryAddAction from "../models/InventoryAddAction.js";
 import { addFoodItem } from "./inventory-service.js";
 import { parseFoodItem } from "./fooditem-service.js";
 
+export const getPendingAddAction = async (userId) => {
+  const actions = await InventoryAddAction.find({
+    ownerId: new Types.ObjectId(userId),
+    status: "PENDING",
+  });
+  if (!actions) return null;
+  return actions[0];
+};
+
 export const createAddAction = async (food, inventoryId, userId) => {
   const { quantity, foodString, expirationDate } = food;
   const newFoodItem = parseFoodItem(quantity, foodString, expirationDate);
@@ -12,6 +21,7 @@ export const createAddAction = async (food, inventoryId, userId) => {
     foodItem: newFoodItem,
     date: new Date(),
   });
+  await unreviseUserPendingAction(userId);
   return await newAddAction.save();
 };
 
@@ -36,6 +46,15 @@ export const rejectAddAction = async (addActionId) => {
   const action = await InventoryAddAction.findById(addActionId);
   action.status = "REJECTED";
   return await action.save();
+};
+
+// TODO: stupid function name
+export const unreviseUserPendingAction = async (userId) => {
+  const actions = await InventoryAddAction.updateMany(
+    { ownerId: new Types.ObjectId(userId), status: "PENDING" },
+    { status: "UNREVISED" }
+  );
+  return actions;
 };
 
 // Number of seconds before actions expire

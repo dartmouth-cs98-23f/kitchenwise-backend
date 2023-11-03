@@ -1,9 +1,13 @@
 import express from "express";
+import { getPendingAddAction } from "../services/addaction-service.js";
 
 const addActionRouter = express.Router();
 
-addActionRouter.get("/pending", (req, res, next) => {
+addActionRouter.get("/pending", async (req, res, next) => {
   try {
+    const { userId } = req.query;
+    const action = await getPendingAddAction(userId);
+    res.json(action).end();
   } catch (err) {
     next(err);
   }
