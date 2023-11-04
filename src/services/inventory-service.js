@@ -43,7 +43,7 @@ export const getUserInventories = async (userId) => {
 
 // Assumes the foodItem has already been parsed (ie by addaction-service functions)
 export const addFoodItem = async (foodItem, inventoryId) => {
-  const { name, unit, expirationDate } = foodItem;
+  const { name, quantity, unit, expirationDate } = foodItem;
   const inventory = await Inventory.findOne({
     _id: new Types.ObjectId(inventoryId),
   });

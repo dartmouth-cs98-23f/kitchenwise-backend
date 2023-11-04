@@ -1,5 +1,9 @@
 import express from "express";
-import { getPendingAddAction } from "../services/addaction-service.js";
+import {
+  confirmAddAction,
+  getPendingAddAction,
+  rejectAddAction,
+} from "../services/addaction-service.js";
 
 const addActionRouter = express.Router();
 
@@ -20,15 +24,21 @@ addActionRouter.get("/history", (req, res, next) => {
   }
 });
 
-addActionRouter.post("/confirm", (req, res, next) => {
+addActionRouter.post("/confirm", async (req, res, next) => {
   try {
+    const { actionId } = req.body;
+    const action = await confirmAddAction(actionId);
+    res.json(action).end();
   } catch (err) {
     next(err);
   }
 });
 
-addActionRouter.post("/reject", (req, res, next) => {
+addActionRouter.post("/reject", async (req, res, next) => {
   try {
+    const { actionId } = req.body;
+    const action = await rejectAddAction(actionId);
+    res.json(action).end();
   } catch (err) {
     next(err);
   }

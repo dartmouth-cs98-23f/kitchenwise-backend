@@ -58,7 +58,7 @@ export const unreviseUserPendingAction = async (userId) => {
 };
 
 // Number of seconds before actions expire
-const actionExpireTime = 10;
+const actionExpireTime = 30;
 
 // This function will add unrevised actions to the inventory after they expire. intended to be run on an interval
 export const unrevisedAddActionListener = async () => {
