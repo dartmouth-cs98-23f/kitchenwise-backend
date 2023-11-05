@@ -3,6 +3,7 @@ import {
   confirmAddAction,
   getPendingAddAction,
   rejectAddAction,
+  reviseAddAction,
 } from "../services/addaction-service.js";
 
 const addActionRouter = express.Router();
@@ -44,8 +45,15 @@ addActionRouter.post("/reject", async (req, res, next) => {
   }
 });
 
-addActionRouter.patch("/revise", (req, res, next) => {
+addActionRouter.put("/revise", async (req, res, next) => {
   try {
+    const addAction = req.body;
+    const revisedAction = await reviseAddAction(
+      addAction._id,
+      addAction.foodItem,
+      addAction.inventoryId
+    );
+    res.json(revisedAction).end();
   } catch (err) {
     next(err);
   }

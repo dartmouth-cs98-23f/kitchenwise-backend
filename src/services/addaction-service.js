@@ -32,11 +32,10 @@ export const confirmAddAction = async (addActionId) => {
   return await action.save();
 };
 
-export const reviseAddAction = async (addActionId, newFood) => {
-  const { quantity, foodString, expirationDate } = newFood;
-  const revisedFoodItem = parseFoodItem(quantity, foodString, expirationDate);
+export const reviseAddAction = async (addActionId, newFood, newInventoryId) => {
   const action = await InventoryAddAction.findById(addActionId);
-  action.foodItem = revisedFoodItem;
+  action.foodItem = newFood;
+  action.inventoryId = new Types.ObjectId(newInventoryId);
   action.status = "REVISED";
   await addFoodItem(action.foodItem, action.inventoryId);
   return await action.save();

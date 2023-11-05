@@ -53,7 +53,7 @@ export const addFoodItem = async (foodItem, inventoryId) => {
     if (
       currItem.name == name &&
       currItem.unit == unit &&
-      currItem.expirationDate == expirationDate
+      currItem.expirationDate?.getTime() == expirationDate?.getTime()
     ) {
       inventory.foodItems[i].quantity += quantity;
       return await inventory.save();
@@ -77,6 +77,7 @@ export const getInventoryFromFood = async (foodItem, userId) => {
   return containingInventories[0];
 };
 
+// TODO: factor expirationDate into this
 export const deleteFoodItem = async (foodItem, inventoryId) => {
   const { foodString: name, quantity: rawQuantity } = foodItem;
   const { quantity, unit } = parseQuantity(rawQuantity);
