@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import indexRouter from "./routes/index.js";
+import { unrevisedAddActionListener } from "./services/addaction-service.js";
 
 const app = express();
 app.use(express.json());
@@ -18,6 +19,7 @@ mongoose
   })
   .then(() => {
     console.log("Connected to MongoDB");
+    setInterval(unrevisedAddActionListener, 2000);
   });
 
 app.use("/", indexRouter);

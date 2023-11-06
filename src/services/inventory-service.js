@@ -2,10 +2,8 @@ import { compareTwoStrings } from "string-similarity";
 import { Types } from "mongoose";
 import Inventory from "../models/Inventory.js";
 
-const parseQuantity = (rawQuantity) => {
-  const quantity = Number(rawQuantity.replace(/[^0-9]/g, ""));
-  const unit = rawQuantity.replace(quantity.toString(), "").trim();
-  return { quantity, unit };
+export const getInventoryById = async (inventoryId) => {
+  return await Inventory.findOne({ _id: new Types.ObjectId(inventoryId) });
 };
 
 const inventoryNameThreshold = 0.7;
@@ -43,10 +41,9 @@ export const getUserInventories = async (userId) => {
   return inventories;
 };
 
+// Assumes the foodItem has already been parsed (ie by addaction-service functions)
 export const addFoodItem = async (foodItem, inventoryId) => {
-  const { foodString: name, quantity: rawQuantity, expirationDate } = foodItem;
-  const { quantity, unit } = parseQuantity(rawQuantity);
-  const parsedFoodItem = { name, quantity, unit, expirationDate };
+  const { name, quantity, unit, expirationDate } = foodItem;
   const inventory = await Inventory.findOne({
     _id: new Types.ObjectId(inventoryId),
   });
@@ -56,13 +53,13 @@ export const addFoodItem = async (foodItem, inventoryId) => {
     if (
       currItem.name == name &&
       currItem.unit == unit &&
-      currItem.expirationDate == expirationDate
+      currItem.expirationDate?.getTime() == expirationDate?.getTime()
     ) {
       inventory.foodItems[i].quantity += quantity;
       return await inventory.save();
     }
   }
-  inventory.foodItems.push(parsedFoodItem);
+  inventory.foodItems.push(foodItem);
   return await inventory.save();
 };
 
@@ -80,6 +77,7 @@ export const getInventoryFromFood = async (foodItem, userId) => {
   return containingInventories[0];
 };
 
+// TODO: factor expirationDate into this
 export const deleteFoodItem = async (foodItem, inventoryId) => {
   const { foodString: name, quantity: rawQuantity } = foodItem;
   const { quantity, unit } = parseQuantity(rawQuantity);
