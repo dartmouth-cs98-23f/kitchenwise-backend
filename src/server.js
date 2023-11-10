@@ -1,10 +1,12 @@
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import cors from "cors";
 import indexRouter from "./routes/index.js";
 import { unrevisedAddActionListener } from "./services/addaction-service.js";
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 if (process.env.NODE_ENV !== "production") {
