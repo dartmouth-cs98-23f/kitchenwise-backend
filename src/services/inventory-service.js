@@ -94,3 +94,46 @@ export const deleteFoodItem = async (foodItem, inventoryId) => {
     }
   }
 };
+
+// Returns a list of n random foodItems a user has in their inventories
+// We treat all the inventories' food items like one big array.
+//   We don't want to O(n) concatenate though, so we generate random indices
+//   less than the total number of food items and use partitions to see which
+//   inventory the indices map to.
+export const getUserFoodSamples = async (userId, numSamples = 10) => {
+  const inventories = await Inventory.find({
+    ownerId: new Types.ObjectId(userId),
+  });
+  let totalFoodItemNum = 0;
+  // Initialized like this so the for loop knows where the first fooditem array starts
+  const partitionDict = {
+    [-1]: 0,
+  };
+  for (let i = 0; i < inventories.length; i++) {
+    totalFoodItemNum += inventories[i].foodItems.length;
+    partitionDict[i] = totalFoodItemNum;
+  }
+  numSamples = Math.min(numSamples, totalFoodItemNum);
+  const samples = [];
+  const randIndices = new Set();
+  // First, create the random indices to ensure there's no repeated items
+  for (let i = 0; i < numSamples; i++) {
+    let randIdx;
+    do {
+      randIdx = Math.round(Math.random() * totalFoodItemNum);
+    } while (randIndices.has(randIdx));
+    randIndices.add(randIdx);
+  }
+  // For each generated random index, compare it to each partition until the correct invIdx is found
+  for (const randIdx of Array.from(randIndices)) {
+    for (const [invIdx, partitionIdx] of Object.entries(partitionDict)) {
+      if (randIdx < partitionIdx) {
+        samples.push(
+          inventories[invIdx].foodItems[randIdx - partitionDict[invIdx - 1]]
+        );
+        break;
+      }
+    }
+  }
+  return samples;
+};
