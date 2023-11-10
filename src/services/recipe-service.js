@@ -1,5 +1,6 @@
 import axios from "axios";
 import dotenv from "dotenv";
+import { Types } from "mongoose";
 import fs, { readFileSync } from "fs";
 dotenv.config();
 import { getUserFoodSamples } from "./inventory-service.js";
@@ -23,33 +24,82 @@ export const generateSuggestedRecipes = async (userId, saveToUser = false) => {
     new Set(foodSamples.map((foodItem) => foodItem.name))
   ).join(",");
   let recipes;
-  //   recipes = (
-  //     await axios.get(SPOONACULAR_URL + "/findByIngredients", {
-  //       params: {
-  //         ingredients: foodSampleNames,
-  //         limitLicense: true,
-  //         ranking: 1,
-  //         ignorePantry: true,
-  //       },
-  //       headers: SPOONACULAR_AUTH,
-  //     })
-  //   ).data;
-  //   for (let i = 0; i < recipes.length; i++) {
-  //     recipes[i].stages = (
-  //       await axios.get(
-  //         SPOONACULAR_URL + `/${recipes[i].id}/analyzedInstructions`,
-  //         { headers: SPOONACULAR_AUTH }
-  //       )
-  //     ).data;
-  //     // break;
-  //   }
+  recipes = (
+    await axios.get(SPOONACULAR_URL + "/findByIngredients", {
+      params: {
+        ingredients: foodSampleNames,
+        limitLicense: true,
+        ranking: 1,
+        ignorePantry: true,
+      },
+      headers: SPOONACULAR_AUTH,
+    })
+  ).data;
+  for (let i = 0; i < recipes.length; i++) {
+    recipes[i] = getSpoonacularSteps(recipes[i]);
+  }
   // fs.writeFileSync(CACHED_RECIPES_PATH, JSON.stringify(recipes));
-  recipes = JSON.parse(readFileSync(CACHED_RECIPES_PATH, "utf8"));
+  // recipes = JSON.parse(readFileSync(CACHED_RECIPES_PATH, "utf8"));
   recipes = recipes.map((spoonacularRecipe) =>
     spoonacularToRecipe(spoonacularRecipe)
   );
   if (saveToUser) await setSuggestedRecipes(userId, recipes);
   return recipes;
+};
+
+// Takes a natural language string query and fetches from spoonacular from it
+export const searchFoodtacularRecipes = async (
+  searchQuery,
+  numResults = 10
+) => {
+  let recipes;
+  // recipes = (
+  //   await axios.get(SPOONACULAR_URL + "/complexSearch", {
+  //     params: {
+  //       query: searchQuery,
+  //       instructionsRequired: true,
+  //       fillIngredients: true,
+  //       addRecipeInformation: false,
+  //       addRecipeNutrition: false,
+  //       ignorePantry: true,
+  //       number: numResults,
+  //     },
+  //     headers: SPOONACULAR_AUTH,
+  //   })
+  // ).data.results;
+  // for (let i = 0; i < recipes.length; i++) {
+  //   recipes[i] = await getSpoonacularSteps(recipes[i]);
+  // }
+  // fs.writeFileSync(CACHED_RECIPES_PATH, JSON.stringify(recipes));
+  recipes = JSON.parse(readFileSync(CACHED_RECIPES_PATH, "utf8"));
+  recipes = recipes.map((spoonacularRecipe) =>
+    spoonacularToRecipe(spoonacularRecipe)
+  );
+  return recipes;
+};
+
+export const saveSpoonacularRecipe = async (userId, foodtacularId) => {
+  let recipe;
+  recipe = (
+    await axios.get(
+      SPOONACULAR_URL + `/recipes/${foodtacularId.toString()}/information`,
+      { headers: SPOONACULAR_AUTH }
+    )
+  ).data;
+  recipe = await getSpoonacularSteps(recipe);
+  recipe = spoonacularToRecipe(recipe);
+  recipe.ownerId = new Types.ObjectId(userId);
+  return await recipe.save();
+};
+
+const getSpoonacularSteps = async (spoonacularRecipe) => {
+  spoonacularRecipe.stages = (
+    await axios.get(
+      SPOONACULAR_URL + `/${spoonacularRecipe.id}/analyzedInstructions`,
+      { headers: SPOONACULAR_AUTH }
+    )
+  ).data;
+  return spoonacularRecipe;
 };
 
 const spoonacularToRecipe = (spoonacularRecipe) => {
