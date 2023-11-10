@@ -11,7 +11,9 @@ TODO: descriptions of code organization and tools and libraries used
 ## Setup
 
 1. Install packages with `npm i`
-2. Add a .env file with `DATABASE_URL=<your mongo url here>`
+2. Add a .env file with the following vars:
+   - `DATABASE_URL=<your mongo url here>`
+   - `SPOONACULAR_API_KEY=<your key for Spoonacular recipe API here>`
 3. Run `npm start`
 
 ## Deployment

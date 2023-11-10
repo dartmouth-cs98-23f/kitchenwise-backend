@@ -3,15 +3,17 @@ import { foodItemSchema } from "./FoodItem.js";
 
 const recipeStageSchema = new mongoose.Schema({
   name: String,
-  foodRequired: [foodItemSchema],
+  ingredients: [String],
   // In minutes
-  timeRequired: Number,
+  timeRequired: { number: Number, quantity: String },
   description: String,
 });
 
-const recipeSchema = new mongoose.Schema({
+export const recipeSchema = new mongoose.Schema({
   title: String,
-  stages: [recipeStageSchema],
+  stages: { type: SchemaTypes.Map, of: [recipeStageSchema] },
+  ingredients: [foodItemSchema],
+  image: String,
   ownerId: { type: SchemaTypes.ObjectId, ref: "User" },
   sharedUsers: [{ type: SchemaTypes.ObjectId, ref: "User" }],
 });
