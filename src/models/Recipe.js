@@ -14,9 +14,14 @@ export const recipeSchema = new mongoose.Schema({
   stages: { type: SchemaTypes.Map, of: [recipeStageSchema] },
   ingredients: [foodItemSchema],
   image: String,
+  // Exists on recipes imported from spoonacular
+  spoonacularId: Number,
   ownerId: { type: SchemaTypes.ObjectId, ref: "User" },
   sharedUsers: [{ type: SchemaTypes.ObjectId, ref: "User" }],
 });
+
+// Ensuring that users' recipe titles don't overlap for the sake of Alexa
+recipeSchema.index({ ownerId: 1, title: 1 }, { unique: true });
 
 const Recipe = mongoose.model("Recipe", recipeSchema);
 

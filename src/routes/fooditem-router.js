@@ -1,10 +1,10 @@
 import express from "express";
 import {
   locationNameToInventory,
-  addFoodItem,
   getUserDefaultInventory,
   getInventoryFromFood,
   deleteFoodItem,
+  getInventoryById,
 } from "../services/inventory-service.js";
 import { createAddAction } from "../services/addaction-service.js";
 
@@ -14,11 +14,11 @@ const foodItemRouter = express.Router();
 foodItemRouter.post("/additem", async (req, res, next) => {
   try {
     // current schema of `food` is {quantity: string, foodString:string }
-    const { location, userId, food } = req.body;
+    const { inventoryId, userId, food } = req.body;
     let targetInventory = null;
     // TODO: should the default inventory be a fallback if the specified location can't be found?
-    if (location) {
-      targetInventory = await locationNameToInventory(location, userId);
+    if (inventoryId) {
+      targetInventory = await getInventoryById(inventoryId);
     } else {
       targetInventory = await getUserDefaultInventory(userId);
     }
@@ -28,7 +28,6 @@ foodItemRouter.post("/additem", async (req, res, next) => {
         .json({ message: `Inventory '${location}' not found.` });
     }
     const addAction = createAddAction(food, targetInventory._id, userId);
-    // const updatedInventory = await addFoodItem(food, targetInventory._id);
     if (addAction) {
       return res
         .status(200)

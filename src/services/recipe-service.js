@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { all } from "axios";
 import dotenv from "dotenv";
 import { Types } from "mongoose";
 import fs, { readFileSync } from "fs";
@@ -17,7 +17,11 @@ const SPOONACULAR_AUTH = {
 // Fetch recipes from here while testing instead of using up API balance.
 const CACHED_RECIPES_PATH = "cached-recipes.json";
 
-export const generateSuggestedRecipes = async (userId, saveToUser = false) => {
+export const generateSuggestedRecipes = async (
+  userId,
+  saveToUser = false,
+  numResults = 10
+) => {
   const foodSamples = await getUserFoodSamples(userId);
   // Creates array of unique names
   const foodSampleNames = Array.from(
@@ -31,12 +35,13 @@ export const generateSuggestedRecipes = async (userId, saveToUser = false) => {
         limitLicense: true,
         ranking: 1,
         ignorePantry: true,
+        number: numResults,
       },
       headers: SPOONACULAR_AUTH,
     })
   ).data;
   for (let i = 0; i < recipes.length; i++) {
-    recipes[i] = getSpoonacularSteps(recipes[i]);
+    recipes[i] = await getSpoonacularSteps(recipes[i]);
   }
   // fs.writeFileSync(CACHED_RECIPES_PATH, JSON.stringify(recipes));
   // recipes = JSON.parse(readFileSync(CACHED_RECIPES_PATH, "utf8"));
@@ -53,25 +58,25 @@ export const searchFoodtacularRecipes = async (
   numResults = 10
 ) => {
   let recipes;
-  // recipes = (
-  //   await axios.get(SPOONACULAR_URL + "/complexSearch", {
-  //     params: {
-  //       query: searchQuery,
-  //       instructionsRequired: true,
-  //       fillIngredients: true,
-  //       addRecipeInformation: false,
-  //       addRecipeNutrition: false,
-  //       ignorePantry: true,
-  //       number: numResults,
-  //     },
-  //     headers: SPOONACULAR_AUTH,
-  //   })
-  // ).data.results;
-  // for (let i = 0; i < recipes.length; i++) {
-  //   recipes[i] = await getSpoonacularSteps(recipes[i]);
-  // }
+  recipes = (
+    await axios.get(SPOONACULAR_URL + "/complexSearch", {
+      params: {
+        query: searchQuery,
+        instructionsRequired: true,
+        fillIngredients: true,
+        addRecipeInformation: false,
+        addRecipeNutrition: false,
+        ignorePantry: true,
+        number: numResults,
+      },
+      headers: SPOONACULAR_AUTH,
+    })
+  ).data.results;
+  for (let i = 0; i < recipes.length; i++) {
+    recipes[i] = await getSpoonacularSteps(recipes[i]);
+  }
   // fs.writeFileSync(CACHED_RECIPES_PATH, JSON.stringify(recipes));
-  recipes = JSON.parse(readFileSync(CACHED_RECIPES_PATH, "utf8"));
+  // recipes = JSON.parse(readFileSync(CACHED_RECIPES_PATH, "utf8"));
   recipes = recipes.map((spoonacularRecipe) =>
     spoonacularToRecipe(spoonacularRecipe)
   );
@@ -82,7 +87,7 @@ export const saveSpoonacularRecipe = async (userId, foodtacularId) => {
   let recipe;
   recipe = (
     await axios.get(
-      SPOONACULAR_URL + `/recipes/${foodtacularId.toString()}/information`,
+      SPOONACULAR_URL + `/${foodtacularId.toString()}/information`,
       { headers: SPOONACULAR_AUTH }
     )
   ).data;
@@ -90,6 +95,14 @@ export const saveSpoonacularRecipe = async (userId, foodtacularId) => {
   recipe = spoonacularToRecipe(recipe);
   recipe.ownerId = new Types.ObjectId(userId);
   return await recipe.save();
+};
+
+export const getSavedRecipes = async (userId) => {
+  userId = new Types.ObjectId(userId);
+  const recipes = await Recipe.find({
+    $or: [{ ownerId: userId }, { sharedUsers: { $in: [userId] } }],
+  });
+  return recipes;
 };
 
 const getSpoonacularSteps = async (spoonacularRecipe) => {
@@ -106,6 +119,7 @@ const spoonacularToRecipe = (spoonacularRecipe) => {
   const recipe = new Recipe();
   recipe.title = spoonacularRecipe.title;
   recipe.image = spoonacularRecipe.image;
+  recipe.spoonacularId = spoonacularRecipe.id;
   recipe.stages = Object.values(spoonacularRecipe.stages).reduce(
     (prev, currStage) => {
       currStage.steps = currStage.steps.map((spoonStage) => ({
@@ -120,10 +134,18 @@ const spoonacularToRecipe = (spoonacularRecipe) => {
     },
     {}
   );
-  const allIngredients = [
-    ...spoonacularRecipe.missedIngredients,
-    ...spoonacularRecipe.usedIngredients,
-  ];
+  let allIngredients = [];
+  if (spoonacularRecipe?.extendedIngredients)
+    allIngredients = allIngredients.concat(
+      spoonacularRecipe?.extendedIngredients
+    );
+  if (spoonacularRecipe?.missedIngredients)
+    allIngredients = allIngredients.concat(
+      spoonacularRecipe?.missedIngredients
+    );
+  if (spoonacularRecipe?.usedIngredients)
+    allIngredients = allIngredients.concat(spoonacularRecipe?.usedIngredients);
+
   recipe.ingredients = allIngredients.map((spoonIngredient) => ({
     name: spoonIngredient?.extendedName || spoonIngredient.name,
     unit: spoonIngredient?.unitShort || spoonIngredient.unit,

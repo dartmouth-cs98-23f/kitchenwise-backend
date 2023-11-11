@@ -7,7 +7,7 @@ export const getUserById = async (userId) => {
 export const setSuggestedRecipes = async (userId, recipes) => {
   const user = await User.findById(userId);
   user.suggestedRecipes = {
-    suggestedDate: Date.now(),
+    dateSuggested: new Date(),
     recipes,
   };
   return await user.save();
