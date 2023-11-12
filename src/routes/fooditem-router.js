@@ -27,16 +27,17 @@ foodItemRouter.post("/additem", async (req, res, next) => {
         .status(404)
         .json({ message: `Inventory '${location}' not found.` });
     }
-    const addAction = createAddAction(food, targetInventory._id, userId);
+    const addAction = await createAddAction(food, targetInventory._id, userId);
     if (addAction) {
       return res
         .status(200)
-        .json({ location: targetInventory.title, food })
+        .json({ location: targetInventory.title, food, action: addAction })
         .end();
     } else {
       return res
         .status(500)
-        .json({ message: `Unable to add ${food.title} to inventory` });
+        .json({ message: `Unable to add ${food.title} to inventory` })
+        .end();
     }
   } catch (err) {
     next(err);

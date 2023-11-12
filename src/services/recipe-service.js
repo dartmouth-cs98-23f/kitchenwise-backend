@@ -125,7 +125,6 @@ const spoonacularToRecipe = (spoonacularRecipe) => {
   recipe.title = spoonacularRecipe.title;
   recipe.image = spoonacularRecipe.image;
   recipe.spoonacularId = spoonacularRecipe.id;
-  console.log(spoonacularRecipe.stages[0].steps[0]);
   recipe.stages = Object.values(spoonacularRecipe.stages).reduce(
     (prev, currStage) => {
       currStage.steps = currStage.steps.map((spoonStage) => ({

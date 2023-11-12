@@ -57,4 +57,14 @@ recipeRouter.post("/save", async (req, res, next) => {
   }
 });
 
+//TODO: build out logic for removing ingredients based on what recipe was cooked/logged
+recipeRouter.post("/log", async (req, res, next) => {
+  try {
+    const { userId, recipeId } = req.body;
+    res.status(200).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default recipeRouter;
