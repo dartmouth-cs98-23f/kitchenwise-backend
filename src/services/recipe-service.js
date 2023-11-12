@@ -17,6 +17,11 @@ const SPOONACULAR_AUTH = {
 // Fetch recipes from here while testing instead of using up API balance.
 const CACHED_RECIPES_PATH = "cached-recipes.json";
 
+export const getRecipeById = async (recipeId) => {
+  const recipe = await Recipe.findById(recipeId);
+  return recipe;
+};
+
 export const generateSuggestedRecipes = async (
   userId,
   saveToUser = false,
@@ -120,6 +125,7 @@ const spoonacularToRecipe = (spoonacularRecipe) => {
   recipe.title = spoonacularRecipe.title;
   recipe.image = spoonacularRecipe.image;
   recipe.spoonacularId = spoonacularRecipe.id;
+  console.log(spoonacularRecipe.stages[0].steps[0]);
   recipe.stages = Object.values(spoonacularRecipe.stages).reduce(
     (prev, currStage) => {
       currStage.steps = currStage.steps.map((spoonStage) => ({

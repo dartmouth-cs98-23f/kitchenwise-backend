@@ -1,6 +1,7 @@
 import express from "express";
 import {
   generateSuggestedRecipes,
+  getRecipeById,
   getSavedRecipes,
   saveSpoonacularRecipe,
 } from "../services/recipe-service.js";
@@ -30,6 +31,17 @@ recipeRouter.get("/suggested", async (req, res, next) => {
       }
     }
     res.json(recipes).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+recipeRouter.get("/", async (req, res, next) => {
+  try {
+    const { recipeId } = req.query;
+    const recipe = await getRecipeById(recipeId);
+    if (!recipe) res.status(404).end();
+    else res.json(recipe).end();
   } catch (err) {
     next(err);
   }
