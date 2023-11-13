@@ -3,18 +3,25 @@ import { foodItemSchema } from "./FoodItem.js";
 
 const recipeStageSchema = new mongoose.Schema({
   name: String,
-  foodRequired: [foodItemSchema],
+  ingredients: [String],
   // In minutes
-  timeRequired: Number,
+  timeRequired: { number: Number, quantity: String },
   description: String,
 });
 
-const recipeSchema = new mongoose.Schema({
+export const recipeSchema = new mongoose.Schema({
   title: String,
-  stages: [recipeStageSchema],
+  stages: { type: SchemaTypes.Map, of: [recipeStageSchema] },
+  ingredients: [foodItemSchema],
+  image: String,
+  // Exists on recipes imported from spoonacular
+  spoonacularId: Number,
   ownerId: { type: SchemaTypes.ObjectId, ref: "User" },
   sharedUsers: [{ type: SchemaTypes.ObjectId, ref: "User" }],
 });
+
+// Ensuring that users' recipe titles don't overlap for the sake of Alexa
+recipeSchema.index({ ownerId: 1, title: 1 }, { unique: true });
 
 const Recipe = mongoose.model("Recipe", recipeSchema);
 

@@ -3,6 +3,10 @@ import InventoryAddAction from "../models/InventoryAddAction.js";
 import { addFoodItem } from "./inventory-service.js";
 import { parseFoodItem } from "./fooditem-service.js";
 
+export const getAddActionById = async (addActionId) => {
+  return await InventoryAddAction.findById(addActionId);
+};
+
 export const getPendingAddAction = async (userId) => {
   const actions = await InventoryAddAction.find({
     ownerId: new Types.ObjectId(userId),
@@ -26,14 +30,14 @@ export const createAddAction = async (food, inventoryId, userId) => {
 };
 
 export const confirmAddAction = async (addActionId) => {
-  const action = await InventoryAddAction.findById(addActionId);
+  const action = await getAddActionById(addActionId);
   await addFoodItem(action.foodItem, action.inventoryId);
   action.state = "CONFIRMED";
   return await action.save();
 };
 
 export const reviseAddAction = async (addActionId, newFood, newInventoryId) => {
-  const action = await InventoryAddAction.findById(addActionId);
+  const action = await getAddActionById(addActionId);
   action.foodItem = newFood;
   action.inventoryId = new Types.ObjectId(newInventoryId);
   action.status = "REVISED";
@@ -42,7 +46,7 @@ export const reviseAddAction = async (addActionId, newFood, newInventoryId) => {
 };
 
 export const rejectAddAction = async (addActionId) => {
-  const action = await InventoryAddAction.findById(addActionId);
+  const action = await getAddActionById(addActionId);
   action.status = "REJECTED";
   return await action.save();
 };

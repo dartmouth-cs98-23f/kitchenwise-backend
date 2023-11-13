@@ -8,6 +8,9 @@ const inventorySchema = new mongoose.Schema({
   foodItems: [foodItemSchema],
 });
 
+// Ensuring that users' inventory titles don't overlap
+inventorySchema.index({ ownerId: 1, title: 1 }, { unique: true });
+
 const Inventory = mongoose.model("Inventory", inventorySchema);
 
 export default Inventory;
