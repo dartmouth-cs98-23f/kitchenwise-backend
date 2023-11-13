@@ -130,3 +130,12 @@ export const getUserFoodSamples = async (userId, numSamples = 10) => {
   }
   return samples;
 };
+
+export const getAllUserFoodItems = async (userId) => {
+  const inventories = await getUserInventories(userId);
+  let allFoodItems = [];
+  for (const inv of inventories) {
+    allFoodItems = allFoodItems.concat(inv.foodItems);
+  }
+  return allFoodItems;
+};

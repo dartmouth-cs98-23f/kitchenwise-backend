@@ -13,6 +13,9 @@ export const recipeSchema = new mongoose.Schema({
   title: String,
   stages: { type: SchemaTypes.Map, of: [recipeStageSchema] },
   ingredients: [foodItemSchema],
+  equipment: [String],
+  // In minutes
+  cookTime: Number,
   image: String,
   // Exists on recipes imported from spoonacular
   spoonacularId: Number,
