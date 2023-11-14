@@ -25,9 +25,8 @@ export const getRecipeById = async (recipeId) => {
   return recipe;
 };
 
-export const labelIngredients = (recipe, foodItemSet) => {
-  const ownedIngredients = [];
-  const missingIngredients = [];
+export const labelIngredients = (recipe, foodItems) => {
+  const foodItemSet = new Set(foodItems.map((item) => item.name));
   for (const ingredient of recipe.ingredients) {
     if (foodItemSet.has(ingredient.name)) {
       recipe.ownedIngredients.push(ingredient.name);
@@ -35,8 +34,6 @@ export const labelIngredients = (recipe, foodItemSet) => {
       recipe.missingIngredients.push(ingredient.name);
     }
   }
-  recipe.ownedIngredients = ownedIngredients;
-  recipe.missedIngredients = missingIngredients;
   return recipe;
 };
 
@@ -72,8 +69,8 @@ export const generateSuggestedRecipes = async (
     spoonacularToRecipe(spoonacularRecipe)
   );
   if (saveToUser) await setSuggestedRecipes(userId, recipes);
-  const foodItemSet = new Set(await getAllUserFoodItems(userId));
-  return recipes.map((rec) => labelIngredients(rec, foodItemSet));
+  const foodItems = await getAllUserFoodItems(userId);
+  return recipes.map((rec) => labelIngredients(rec, foodItems));
 };
 
 // Takes a natural language string query and fetches from spoonacular from it
@@ -106,8 +103,8 @@ export const searchFoodtacularRecipes = async (
     spoonacularToRecipe(spoonacularRecipe)
   );
   if (userId) {
-    const foodItemSet = new Set(await getAllUserFoodItems(userId));
-    recipes = recipes.map((rec) => labelIngredients(rec, foodItemSet));
+    const foodItems = await getAllUserFoodItems(userId);
+    recipes = recipes.map((rec) => labelIngredients(rec, foodItems));
   }
   return recipes;
 };
@@ -143,8 +140,8 @@ export const getSavedRecipes = async (userId) => {
   const recipes = await Recipe.find({
     $or: [{ ownerId: userId }, { sharedUsers: { $in: [userId] } }],
   });
-  const foodItemSet = new Set(await getAllUserFoodItems(userId));
-  return recipes.map((rec) => labelIngredients(rec, foodItemSet));
+  const foodItems = await getAllUserFoodItems(userId);
+  return recipes.map((rec) => labelIngredients(rec, foodItems));
 };
 
 const getSpoonacularSteps = async (spoonacularRecipe) => {

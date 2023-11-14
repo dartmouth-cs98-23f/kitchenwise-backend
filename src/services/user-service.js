@@ -20,11 +20,10 @@ export const clearSuggestedRecipes = async (userId) => {
 };
 
 export const getSuggestedRecipes = async (userId) => {
-  const foodItemSet = new Set(await getAllUserFoodItems(userId));
+  const foodItems = await getAllUserFoodItems(userId);
   const suggestedRecipes = (await getUserById(userId)).suggestedRecipes;
   suggestedRecipes.recipes = suggestedRecipes.recipes.map((rec) =>
-    labelIngredients(rec, foodItemSet)
+    labelIngredients(rec, foodItems)
   );
-  console.log(suggestedRecipes.recipes);
   return suggestedRecipes;
 };
