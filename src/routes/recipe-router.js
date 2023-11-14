@@ -1,4 +1,5 @@
 import express from "express";
+import { ServerError } from "../util.js";
 import {
   generateSuggestedRecipes,
   getRecipeById,
@@ -50,8 +51,14 @@ recipeRouter.get("/", async (req, res, next) => {
 recipeRouter.post("/save", async (req, res, next) => {
   try {
     const { userId, recipeId } = req.body;
-    const recipe = await saveSpoonacularRecipe(userId, recipeId);
-    res.json(recipe).end();
+    try {
+      const recipe = await saveSpoonacularRecipe(userId, recipeId);
+      res.json(recipe).end();
+    } catch (err) {
+      if (err?.code && err.code == 11000) {
+        throw new ServerError(`You have already saved this recipe.`, 400);
+      }
+    }
   } catch (err) {
     next(err);
   }

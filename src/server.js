@@ -28,6 +28,7 @@ app.use("/", indexRouter);
 
 app.use(function (err, req, res, next) {
   console.error(err);
+  console.log(err.code);
   res
     .status(err.code || 500)
     .json({ message: err.message })
