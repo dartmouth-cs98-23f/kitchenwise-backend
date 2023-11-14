@@ -31,24 +31,37 @@ export const createAddAction = async (food, inventoryId, userId) => {
 
 export const confirmAddAction = async (addActionId) => {
   const action = await getAddActionById(addActionId);
-  await addFoodItem(action.foodItem, action.inventoryId);
-  action.state = "CONFIRMED";
-  return await action.save();
+  if (action.status == "PENDING") {
+    await addFoodItem(action.foodItem, action.inventoryId);
+    action.state = "CONFIRMED";
+    return await action.save();
+  } else if (action.status != "CONFIRMED" && action.status != "UNREVISED") {
+    throw new Error("Action has already been revised or rejected");
+  }
+  return action;
 };
 
 export const reviseAddAction = async (addActionId, newFood, newInventoryId) => {
   const action = await getAddActionById(addActionId);
-  action.foodItem = newFood;
-  action.inventoryId = new Types.ObjectId(newInventoryId);
-  action.status = "REVISED";
-  await addFoodItem(action.foodItem, action.inventoryId);
-  return await action.save();
+  if (action.status == "PENDING") {
+    action.foodItem = newFood;
+    action.inventoryId = new Types.ObjectId(newInventoryId);
+    action.status = "REVISED";
+    await addFoodItem(action.foodItem, action.inventoryId);
+    return await action.save();
+  } else {
+    throw new Error("Cannot revise non-pending action");
+  }
 };
 
 export const rejectAddAction = async (addActionId) => {
   const action = await getAddActionById(addActionId);
-  action.status = "REJECTED";
-  return await action.save();
+  if (action.status == "PENDING") {
+    action.status = "REJECTED";
+    return await action.save();
+  } else {
+    throw new Error("Cannot reject non-pending action");
+  }
 };
 
 // TODO: stupid function name

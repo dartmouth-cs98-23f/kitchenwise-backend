@@ -1,10 +1,12 @@
 import express from "express";
-import { ServerError } from "../util.js";
+import { ServerError, isMongoDuplicate } from "../util.js";
 import {
   generateSuggestedRecipes,
   getRecipeById,
   getSavedRecipes,
   saveSpoonacularRecipe,
+  searchFoodtacularRecipes,
+  unsaveRecipe,
 } from "../services/recipe-service.js";
 import { getSuggestedRecipes } from "../services/user-service.js";
 
@@ -37,6 +39,16 @@ recipeRouter.get("/suggested", async (req, res, next) => {
   }
 });
 
+recipeRouter.get("/search", async (req, res, next) => {
+  try {
+    const { searchQuery, userId } = req.query;
+    const recipes = await searchFoodtacularRecipes(searchQuery, userId);
+    res.json(recipes).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
 recipeRouter.get("/", async (req, res, next) => {
   try {
     const { recipeId } = req.query;
@@ -50,15 +62,28 @@ recipeRouter.get("/", async (req, res, next) => {
 
 recipeRouter.post("/save", async (req, res, next) => {
   try {
+    // recipeId is spoonacular Id here
     const { userId, recipeId } = req.body;
     try {
       const recipe = await saveSpoonacularRecipe(userId, recipeId);
       res.json(recipe).end();
     } catch (err) {
-      if (err?.code && err.code == 11000) {
+      if (isMongoDuplicate(err)) {
         throw new ServerError(`You have already saved this recipe.`, 400);
       }
+      throw err;
     }
+  } catch (err) {
+    next(err);
+  }
+});
+
+recipeRouter.delete("/unsave", async (req, res, next) => {
+  try {
+    // recipeId is _id in our database
+    const { userId, recipeId } = req.body;
+    const recipe = await unsaveRecipe(userId, recipeId);
+    res.json(recipe).end();
   } catch (err) {
     next(err);
   }

@@ -1,6 +1,7 @@
 import { compareTwoStrings } from "string-similarity";
 import { Types } from "mongoose";
 import Inventory from "../models/Inventory.js";
+import { parseFoodItem } from "./fooditem-service.js";
 
 export const getInventoryById = async (inventoryId) => {
   return await Inventory.findById(inventoryId);
@@ -61,8 +62,10 @@ export const addFoodItem = async (foodItem, inventoryId) => {
 };
 
 export const getInventoryFromFood = async (foodItem, userId) => {
-  const { foodString: name, quantity: rawQuantity, expirationDate } = foodItem;
-  const { quantity, unit } = parseQuantity(rawQuantity);
+  const { name, quantity, unit, expirationDate } = parseFoodItem(
+    foodItem.quantity,
+    foodItem.foodString
+  );
   const containingInventories = await Inventory.find({
     $and: [
       { ownerId: new Types.ObjectId(userId) },
@@ -76,15 +79,18 @@ export const getInventoryFromFood = async (foodItem, userId) => {
 
 // TODO: factor expirationDate into this
 export const deleteFoodItem = async (foodItem, inventoryId) => {
-  const { foodString: name, quantity: rawQuantity } = foodItem;
-  const { quantity, unit } = parseQuantity(rawQuantity);
+  const { name, quantity, unit } = parseFoodItem(
+    foodItem.quantity,
+    foodItem.foodString
+  );
   const inventory = await getInventoryById(inventoryId);
   for (let i = 0; i < inventory.foodItems.length; i++) {
     const currItem = inventory.foodItems[i];
     if (currItem.name == name && currItem.unit == unit) {
       inventory.foodItems[i].quantity -= quantity;
-      if (inventory.foodItems[i].quantity == 0)
-        inventory.foodItems = inventory.foodItems.splice(i);
+      if (inventory.foodItems[i].quantity == 0) {
+        inventory.foodItems.splice(i);
+      }
       return await inventory.save();
     }
   }
@@ -142,9 +148,8 @@ export const getAllUserFoodItems = async (userId) => {
 };
 
 export const createNewInventory = async (title, userId) => {
-  const inventory = new Inventory({
-    title,
-    ownerId: new Types.ObjectId(userId),
-  });
+  const inventory = new Inventory();
+  inventory.title = title;
+  inventory.ownerId = new Types.ObjectId(userId);
   return await inventory.save();
 };

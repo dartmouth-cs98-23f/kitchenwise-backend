@@ -1,6 +1,5 @@
 import express from "express";
 import {
-  locationNameToInventory,
   getUserDefaultInventory,
   getInventoryFromFood,
   deleteFoodItem,
@@ -46,9 +45,9 @@ foodItemRouter.post("/additem", async (req, res, next) => {
 
 foodItemRouter.delete("/deleteitem", async (req, res, next) => {
   try {
-    const { location, userId, food } = req.body;
-    const foodLocation = location
-      ? await locationNameToInventory(location, userId)
+    const { inventoryId, userId, food } = req.body;
+    const foodLocation = inventoryId
+      ? await getInventoryById(inventoryId)
       : await getInventoryFromFood(food, userId);
     if (!foodLocation) {
       return res
