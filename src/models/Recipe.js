@@ -21,6 +21,8 @@ export const recipeSchema = new mongoose.Schema({
   spoonacularId: Number,
   ownerId: { type: SchemaTypes.ObjectId, ref: "User" },
   sharedUsers: [{ type: SchemaTypes.ObjectId, ref: "User" }],
+  ownedIngredients: [String],
+  missingIngredients: [String],
 });
 
 // Ensuring that users' recipe titles don't overlap for the sake of Alexa

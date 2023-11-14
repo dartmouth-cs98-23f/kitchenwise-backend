@@ -1,4 +1,6 @@
 import User from "../models/User.js";
+import { getAllUserFoodItems } from "./inventory-service.js";
+import { labelIngredients } from "./recipe-service.js";
 
 export const getUserById = async (userId) => {
   return await User.findById(userId);
@@ -18,5 +20,11 @@ export const clearSuggestedRecipes = async (userId) => {
 };
 
 export const getSuggestedRecipes = async (userId) => {
-  return (await getUserById(userId)).suggestedRecipes;
+  const foodItemSet = new Set(await getAllUserFoodItems(userId));
+  const suggestedRecipes = (await getUserById(userId)).suggestedRecipes;
+  suggestedRecipes.recipes = suggestedRecipes.recipes.map((rec) =>
+    labelIngredients(rec, foodItemSet)
+  );
+  console.log(suggestedRecipes.recipes);
+  return suggestedRecipes;
 };

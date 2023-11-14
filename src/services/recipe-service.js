@@ -3,7 +3,10 @@ import dotenv from "dotenv";
 import { Types } from "mongoose";
 import fs, { readFileSync } from "fs";
 dotenv.config();
-import { getUserFoodSamples } from "./inventory-service.js";
+import {
+  getAllUserFoodItems,
+  getUserFoodSamples,
+} from "./inventory-service.js";
 import Recipe from "../models/Recipe.js";
 import { setSuggestedRecipes } from "./user-service.js";
 
@@ -19,6 +22,21 @@ const CACHED_RECIPES_PATH = "cached-recipes.json";
 
 export const getRecipeById = async (recipeId) => {
   const recipe = await Recipe.findById(recipeId);
+  return recipe;
+};
+
+export const labelIngredients = (recipe, foodItemSet) => {
+  const ownedIngredients = [];
+  const missingIngredients = [];
+  for (const ingredient of recipe.ingredients) {
+    if (foodItemSet.has(ingredient.name)) {
+      recipe.ownedIngredients.push(ingredient.name);
+    } else {
+      recipe.missingIngredients.push(ingredient.name);
+    }
+  }
+  recipe.ownedIngredients = ownedIngredients;
+  recipe.missedIngredients = missingIngredients;
   return recipe;
 };
 
@@ -54,12 +72,14 @@ export const generateSuggestedRecipes = async (
     spoonacularToRecipe(spoonacularRecipe)
   );
   if (saveToUser) await setSuggestedRecipes(userId, recipes);
-  return recipes;
+  const foodItemSet = new Set(await getAllUserFoodItems(userId));
+  return recipes.map((rec) => labelIngredients(rec, foodItemSet));
 };
 
 // Takes a natural language string query and fetches from spoonacular from it
 export const searchFoodtacularRecipes = async (
   searchQuery,
+  userId,
   numResults = 10
 ) => {
   let recipes;
@@ -85,6 +105,10 @@ export const searchFoodtacularRecipes = async (
   recipes = recipes.map((spoonacularRecipe) =>
     spoonacularToRecipe(spoonacularRecipe)
   );
+  if (userId) {
+    const foodItemSet = new Set(await getAllUserFoodItems(userId));
+    recipes = recipes.map((rec) => labelIngredients(rec, foodItemSet));
+  }
   return recipes;
 };
 
@@ -102,12 +126,25 @@ export const saveSpoonacularRecipe = async (userId, foodtacularId) => {
   return await recipe.save();
 };
 
+export const unsaveRecipe = async (userId, recipeId) => {
+  const recipe = await getRecipeById(recipeId);
+  userId = new Types.ObjectId(userId);
+  if (recipe.ownerId.equals(userId)) recipe.ownerId = null;
+  if (recipe.sharedUsers.includes(userId))
+    recipe.sharedUsers.splice(recipe.sharedUsers.indexOf(userId));
+  // Delete from DB if no one owns it or is subscribed to it
+  if (recipe.ownerId == null && recipe.sharedUsers.length == 0)
+    return await Recipe.findByIdAndDelete(recipeId);
+  return await recipe.save();
+};
+
 export const getSavedRecipes = async (userId) => {
   userId = new Types.ObjectId(userId);
   const recipes = await Recipe.find({
     $or: [{ ownerId: userId }, { sharedUsers: { $in: [userId] } }],
   });
-  return recipes;
+  const foodItemSet = new Set(await getAllUserFoodItems(userId));
+  return recipes.map((rec) => labelIngredients(rec, foodItemSet));
 };
 
 const getSpoonacularSteps = async (spoonacularRecipe) => {
