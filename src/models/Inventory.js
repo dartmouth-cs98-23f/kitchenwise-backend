@@ -6,6 +6,7 @@ const inventorySchema = new mongoose.Schema({
   ownerId: { type: SchemaTypes.ObjectId, ref: "User" },
   sharedUsers: [{ type: SchemaTypes.ObjectId, ref: "User" }],
   foodItems: [foodItemSchema],
+  default: Boolean,
 });
 
 // Ensuring that users' inventory titles don't overlap

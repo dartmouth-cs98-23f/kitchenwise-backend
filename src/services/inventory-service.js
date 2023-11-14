@@ -9,6 +9,7 @@ export const getInventoryById = async (inventoryId) => {
 export const getUserDefaultInventory = async (userId) => {
   const inventory = await Inventory.findOne({
     ownerId: new Types.ObjectId(userId),
+    default: true,
   });
   if (!inventory) return null;
   return inventory;
@@ -138,4 +139,12 @@ export const getAllUserFoodItems = async (userId) => {
     allFoodItems = allFoodItems.concat(inv.foodItems);
   }
   return allFoodItems;
+};
+
+export const createNewInventory = async (title, userId) => {
+  const inventory = new Inventory({
+    title,
+    ownerId: new Types.ObjectId(userId),
+  });
+  return await inventory.save();
 };

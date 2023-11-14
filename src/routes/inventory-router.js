@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  createNewInventory,
   getAllUserFoodItems,
   getUserInventories,
 } from "../services/inventory-service.js";
@@ -26,7 +27,15 @@ inventoryRouter.get("/allitems", async (req, res, next) => {
   }
 });
 
-inventoryRouter.get("/get", (req, res) => {});
+inventoryRouter.post("/create", async (req, res, next) => {
+  try {
+    const { title, userId } = req.body;
+    const inventory = await createNewInventory(title, userId);
+    res.json(inventory).end();
+  } catch (err) {
+    next(err);
+  }
+});
 
 inventoryRouter.get("/items", (req, res) => {});
 
