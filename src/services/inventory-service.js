@@ -89,7 +89,7 @@ export const deleteFoodItem = async (foodItem, inventoryId) => {
     if (currItem.name == name && currItem.unit == unit) {
       inventory.foodItems[i].quantity -= quantity;
       if (inventory.foodItems[i].quantity == 0) {
-        inventory.foodItems.splice(i);
+        inventory.foodItems.splice(i, 1);
       }
       return await inventory.save();
     }
