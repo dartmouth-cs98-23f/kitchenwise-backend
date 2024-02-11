@@ -1,8 +1,13 @@
 import mongoose from "mongoose";
-import { foodItemSchema } from "./FoodItem";
+import { foodItemSchema } from "./FoodItem.js";
 
-export const ShoppingListItemSchema = new mongoose.Schema({
-  item: foodItemSchema,
-  price:  mongoose.Types.Decimal128,
+export const shoppingListItemSchema = new mongoose.Schema({
+  title: String,
+  amount: Number,
+  price: Number,
   importance: Number,
 });
+
+const ShoppingListItem = mongoose.model("ShoppingListItem", shoppingListItemSchema);
+
+export default ShoppingListItem;
