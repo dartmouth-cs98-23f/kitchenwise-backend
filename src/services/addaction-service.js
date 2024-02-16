@@ -16,6 +16,18 @@ export const getPendingAddAction = async (userId) => {
   return actions[0];
 };
 
+export const getValidAddActions = async (userId) => {
+  try {
+    const actions = await InventoryAddAction.find({
+      ownerId: new Types.ObjectId(userId),
+      status: { $in: ["CONFIRMED", "REVISED", "UNREVISED"] }
+    });
+    return actions;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const createAddAction = async (food, inventoryId, userId) => {
   const { quantity, foodString, expirationDate } = food;
   const newFoodItem = parseFoodItem(quantity, foodString, expirationDate);
