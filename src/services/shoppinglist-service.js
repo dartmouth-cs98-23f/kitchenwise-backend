@@ -1,8 +1,9 @@
 import ShoppingList from "../models/ShoppingList.js";
-import  { Types } from "mongoose";
+import { Types } from "mongoose";
 import ShoppingListItem from "../models/ShoppingListItem.js";
 
 export const createNewShoppingList = async (listTitle, userId) => {
+  console.log("creating new list")
   const list = new ShoppingList();
   list.title = listTitle;
   list.ownerId = new Types.ObjectId(userId);
@@ -20,7 +21,7 @@ export const getUserShoppingLists = async (userId) => {
 };
 
 
-let getUserShoppingList = async (userId, listTitle) => {
+export let getUserShoppingList = async (userId, listTitle) => {
   try {
     const list = await ShoppingList.find({
       ownerId: new Types.ObjectId(userId),
@@ -43,7 +44,7 @@ export const getAllUserShoppingItems = async (userId) => {
   return allFoodItems;
 };
 
-export const  addShoppingListItems = async (userId, title, foodItem, foodAmount) => {
+export const addShoppingListItems = async (userId, title, foodItem, foodAmount) => {
   const item = new ShoppingListItem();
   item.title = foodItem;
   item.amount = foodAmount;
@@ -52,13 +53,13 @@ export const  addShoppingListItems = async (userId, title, foodItem, foodAmount)
 
   let listContainer = await getUserShoppingList(userId, title);
   let rlist = listContainer[0];
-  if (rlist == null) {
-    rlist = await createNewShoppingList(title, userId);
-  }
-
+  // if (rlist == null) {
+  //   rlist = await createNewShoppingList(title, userId);
+  // }
+  console.log("rlist", rlist)
   // TODO: Find a faster way to do this, db query probably is faster with hashing
   let flag = 1;
-  for ( let i = 0; i < rlist.shoppingListItems.length; i++) {
+  for (let i = 0; i < rlist.shoppingListItems.length; i++) {
     let title = rlist.shoppingListItems[i].title;
     if (title === item.title) {
       rlist.shoppingListItems[i].amount += item.amount
