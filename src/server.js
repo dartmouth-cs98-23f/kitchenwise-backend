@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import indexRouter from "./routes/index.js";
 import { unrevisedAddActionListener } from "./services/addaction-service.js";
+import { unrevisedRemoveActionListener } from "./services/removeaction-service.js";
 
 const app = express();
 app.use(cors());
@@ -22,6 +23,7 @@ mongoose
   .then(() => {
     console.log("Connected to MongoDB");
     setInterval(unrevisedAddActionListener, 2000);
+    setInterval(unrevisedRemoveActionListener, 2000);
   });
 
 app.use("/", indexRouter);

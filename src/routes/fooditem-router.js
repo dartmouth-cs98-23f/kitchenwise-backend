@@ -2,7 +2,7 @@ import express from "express";
 import {
   getUserDefaultInventory,
   getInventoryFromFood,
-  deleteFoodItem,
+  removeFoodItem,
   getInventoryById,
 } from "../services/inventory-service.js";
 import { createAddAction } from "../services/addaction-service.js";
@@ -56,7 +56,7 @@ foodItemRouter.delete("/deleteitem", async (req, res, next) => {
     }
     if (Array.isArray(foodLocation))
       return res.status(300).json({ inventoryChoices: foodLocation });
-    const updatedInventory = await deleteFoodItem(food, foodLocation._id);
+    const updatedInventory = await removeFoodItem(food, foodLocation._id);
     return res
       .status(200)
       .json({ location: updatedInventory.title, food })

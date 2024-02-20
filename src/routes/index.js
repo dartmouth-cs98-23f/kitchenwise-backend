@@ -6,6 +6,7 @@ import mealRouter from "./meal-router.js";
 import recipeRouter from "./recipe-router.js";
 import userRouter from "./user-router.js";
 import addActionRouter from "./addaction-router.js";
+import removeActionRouter from "./removeaction-router.js";
 
 const indexRouter = express.Router();
 
@@ -20,5 +21,6 @@ indexRouter.use("/meal", mealRouter);
 indexRouter.use("/recipe", recipeRouter);
 indexRouter.use("/user", userRouter);
 indexRouter.use("/addaction", addActionRouter);
+indexRouter.use("/removeaction", removeActionRouter);
 
 export default indexRouter;

@@ -87,11 +87,11 @@ export const getInventoryFromFood = async (foodItem, userId) => {
 };
 
 // TODO: factor expirationDate into this
-export const deleteFoodItem = async (foodItem, inventoryId) => {
-  const { name, quantity, unit } = parseFoodItem(
-    foodItem.quantity,
-    foodItem.foodString
-  );
+export const removeFoodItem = async (foodItem, inventoryId, parsed = false) => {
+  const { name, quantity, unit } = parsed
+    ? foodItem
+    : parseFoodItem(foodItem.quantity, foodItem.foodString);
+  console.log(name, quantity, unit);
   const inventory = await getInventoryById(inventoryId);
   for (let i = 0; i < inventory.foodItems.length; i++) {
     const currItem = inventory.foodItems[i];
@@ -153,7 +153,11 @@ export const getAllUserFoodItems = async (userId) => {
   for (const inv of inventories) {
     allFoodItems = allFoodItems.concat(
       // we attach the inventory title instead of the id because the title is unique to the user and easier to filter by in pantry page
-      inv.foodItems.map((item) => ({ ...item._doc, inventoryTitle: inv.title }))
+      inv.foodItems.map((item) => ({
+        ...item._doc,
+        inventoryTitle: inv.title,
+        inventoryId: inv._id,
+      }))
     );
   }
   return allFoodItems;
