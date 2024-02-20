@@ -120,32 +120,33 @@ export const getUniqueItemsCount = async (userId, userFoodItems) => {
 
 // get the user's ranking for add actions
 // TODO: when remove actions implemented, add logic in here also
-export const getUserRankingsPercent = async (userId, currentUserAddActions) => {
-// Also, might be bad to get users by querying all add actions. 
-// User schema should have owner Id, no?
+export const getUserRankingsPercent = async (userId) => {
   try {
-    const allAddActions = await InventoryAddAction.find();
-    const currentUserAddActionsCount = currentUserAddActions.length;
+    // Get current year
+    const currentYear = new Date().getFullYear();
 
-    // Calculate the number of add actions for each user
-    const userAddActionsCounts = {};
-    allAddActions.forEach(action => {
-      const ownerId = action.ownerId.toString();
-      if (!userAddActionsCounts[ownerId]) {
-        userAddActionsCounts[ownerId] = 1;
-      } else {
-        userAddActionsCounts[ownerId]++;
-      }
-    });
+    // Query all users
+    const allUsers = await User.find();
 
-    // Sort user add actions counts in descending order
-    const sortedUserAddActionsCounts = Object.values(userAddActionsCounts).sort((a, b) => b - a);
+    // Calculate number of add actions in the current year for each user
+    const userActionsByYear = {};
+    for (const user of allUsers) {
+      // Get all addActions for this user
+      const userActions = await getValidAddActions(user._id);
+      // Get only add actions for the current year
+      const actionsInYear = userActions.filter(action => action.date.getFullYear() === currentYear);
+      userActionsByYear[user._id] = actionsInYear.length;
+    }
 
-    // Find the position of the current user's add actions count in the sorted list
-    const currentUserIndex = sortedUserAddActionsCounts.findIndex(count => count === currentUserAddActionsCount);
+    // Sort users based on the number of add actions
+    const sortedUsers = Object.entries(userActionsByYear).sort((a, b) => b[1] - a[1]);
 
-    const percentile = (currentUserIndex / sortedUserAddActionsCounts.length) * 100;
-    
+    // Find the current user's position in the sorted list
+    const currentUserIndex = sortedUsers.findIndex(([userId]) => userId.toString() === userId.toString());
+
+    // Calculate percentile for the current user
+    const percentile = (currentUserIndex / sortedUsers.length) * 100;
+
     const statistic = new Statistic({
       statisticId: 7, // the statisticId for peak add action month is 4
       ownerId: userId,
@@ -153,6 +154,7 @@ export const getUserRankingsPercent = async (userId, currentUserAddActions) => {
       description: "You are in the top {{consumerPercentage}}% of Kitchenwise users",
       uniqueFoodItems: percentile,
     });
+
     return statistic;
   } catch (error) {
     throw error;
