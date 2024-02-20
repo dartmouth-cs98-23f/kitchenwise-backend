@@ -22,8 +22,8 @@ export const getStatistics = async (userId) => {
         // don't need spoonacular
         getPeakActionMonth(userId, allAddActions), // get peak add action month
         getPeakRemoveActionMonth(userId),  // we dont have remove actions in database
-        getUniqueItemsCount(userId, allUserFoodItems),
-        getUserRankingsPercent(userId)
+        getUniqueItemsCount(userId, allUserFoodItems),  // just counting all inventory food items
+        getUserRankingsPercent(userId, allAddActions),  // just counting add actions per user
       ];
   
       const results = await Promise.all(promises);
@@ -34,41 +34,8 @@ export const getStatistics = async (userId) => {
     } catch (error) {
       throw error;
     }
-}
+};
 
-// save newly computed statistics to database
-const saveStatistics = async (userId, results) => {
-  try {
-    const statistics = new Statistics({
-      ownerId: userId,
-      statistics: results
-    });
-
-    await statistics.save();
-  } catch (error) {
-    throw error;
-  }
-}
-
-export const useExistingStatistics = async (userId) => {
-  try {
-    const mostRecentStatistics = await Statistics.findOne({ ownerId: userId })
-      .sort({ lastUpdated: -1 }) // Sort by lastUpdated date in descending order to get the most recent statistic first
-      .limit(1);
-
-    if (mostRecentStatistics) {
-      // Check if the last updated date is less than a month ago
-      const oneMonthAgo = new Date();
-      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-      if (mostRecentStatistics.lastUpdated > oneMonthAgo) {
-        return mostRecentStatistics;
-      }
-    }
-    return null; // Return null if no recent statistic found or it's older than a month
-  } catch (error) {
-    throw error;
-  }
-}
 
 export const getFoodInventoryGrowth = async (userId, allAddActions) => {
 
@@ -151,13 +118,86 @@ export const getUniqueItemsCount = async (userId, userFoodItems) => {
   return statistic;
 };
 
-export const getUserRankingsPercent = async (userId) => {
+// get the user's ranking for add actions
+// TODO: when remove actions implemented, add logic in here also
+export const getUserRankingsPercent = async (userId, currentUserAddActions) => {
+// Also, might be bad to get users by querying all add actions. 
+// User schema should have owner Id, no?
+  try {
+    const allAddActions = await InventoryAddAction.find();
+    const currentUserAddActionsCount = currentUserAddActions.length;
 
-};
+    // Calculate the number of add actions for each user
+    const userAddActionsCounts = {};
+    allAddActions.forEach(action => {
+      const ownerId = action.ownerId.toString();
+      if (!userAddActionsCounts[ownerId]) {
+        userAddActionsCounts[ownerId] = 1;
+      } else {
+        userAddActionsCounts[ownerId]++;
+      }
+    });
+
+    // Sort user add actions counts in descending order
+    const sortedUserAddActionsCounts = Object.values(userAddActionsCounts).sort((a, b) => b - a);
+
+    // Find the position of the current user's add actions count in the sorted list
+    const currentUserIndex = sortedUserAddActionsCounts.findIndex(count => count === currentUserAddActionsCount);
+
+    const percentile = (currentUserIndex / sortedUserAddActionsCounts.length) * 100;
+    
+    const statistic = new Statistic({
+      statisticId: 7, // the statisticId for peak add action month is 4
+      ownerId: userId,
+      title: "User Rankings",
+      description: "You are in the top {{consumerPercentage}}% of Kitchenwise users",
+      uniqueFoodItems: percentile,
+    });
+    return statistic;
+  } catch (error) {
+    throw error;
+  }
+}
 
 // helper functions
 
 // Function to return capitalized month name
 const getCapitalizedMonth = (date) => {
   return new Intl.DateTimeFormat('en-US', { month: 'long' }).format(date);
-}
+};
+
+
+// save newly computed statistics to database
+const saveStatistics = async (userId, results) => {
+  try {
+    const statistics = new Statistics({
+      ownerId: userId,
+      statistics: results
+    });
+
+    await statistics.save();
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Reuse already calculated statistics if less than a month has passed
+export const useExistingStatistics = async (userId) => {
+  try {
+    const mostRecentStatistics = await Statistics.findOne({ ownerId: userId })
+      .sort({ lastUpdated: -1 }) // Sort by lastUpdated date in descending order to get the most recent statistic first
+      .limit(1);
+
+    if (mostRecentStatistics) {
+      // Check if the last updated date is less than a month ago
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+      if (mostRecentStatistics.lastUpdated > oneMonthAgo) {
+        return mostRecentStatistics;
+      }
+    }
+    return null; // Return null if no recent statistic found or it's older than a month
+  } catch (error) {
+    throw error;
+  }
+};
