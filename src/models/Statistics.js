@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { SchemaTypes } from "mongoose";
 
 // can be money, weight, or percentage composition
 const foodBreakdownSchema = new mongoose.Schema({
@@ -32,9 +32,16 @@ const statisticSchema = new mongoose.Schema({
 
   uniqueFoodItems: { type: Number }, // number of different food items added to inventory
   consumerPercentage: { type: Number },  // percentile where current user ranks for a food statistic
-  lastUpdated: { type: Date, default: Date.now }  // to determine whether or not to recalculate
 });
 
 const Statistic = mongoose.model('InventoryItem', statisticSchema);
 
-export default Statistic;
+const statisticsSchema = new mongoose.Schema({
+  ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  lastUpdated: { type: Date, default: Date.now },  // to determine whether or not to recalculate
+  statistics: [statisticSchema]
+});
+
+const Statistics = mongoose.model('UserStatistic', statisticsSchema);
+
+export { Statistic, Statistics };
