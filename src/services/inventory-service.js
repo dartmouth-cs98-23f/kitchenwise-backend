@@ -105,6 +105,14 @@ export const removeFoodItem = async (foodItem, inventoryId, parsed = false) => {
   }
 };
 
+export const deleteFoodItemById = async (foodItemId, inventoryId) => {
+  const inventory = getInventoryById(inventoryId);
+  inventory.foodItems = inventory.foodItems.filter(
+    (foodItem) => foodItem._id != foodItemId
+  );
+  return await inventory.save();
+};
+
 // Returns a list of n random foodItems a user has in their inventories
 // We treat all the inventories' food items like one big array.
 //   We don't want to O(n) concatenate though, so we generate random indices
@@ -183,4 +191,19 @@ export const deleteInventory = async (inventoryId, destinationInventoryId) => {
     destinationInventoryId
   );
   return await Inventory.deleteOne({ _id: inventoryId });
+};
+
+export const updateInventoryItem = async (
+  inventoryId,
+  foodItemId,
+  newFoodItem
+) => {
+  const inventory = await getInventoryById(inventoryId);
+  inventory.foodItems = inventory.foodItems.map((foodItem) =>
+    foodItem._id.toString() === foodItemId
+      ? { ...foodItem, ...newFoodItem }
+      : foodItem
+  );
+  console.log(foodItemId, newFoodItem, inventory.foodItems);
+  return await inventory.save();
 };

@@ -4,6 +4,7 @@ import {
   getInventoryFromFood,
   removeFoodItem,
   getInventoryById,
+  updateInventoryItem,
 } from "../services/inventory-service.js";
 import { createAddAction } from "../services/addaction-service.js";
 
@@ -61,6 +62,21 @@ foodItemRouter.delete("/deleteitem", async (req, res, next) => {
       .status(200)
       .json({ location: updatedInventory.title, food })
       .end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+foodItemRouter.patch("/edititem", async (req, res, next) => {
+  try {
+    const { inventoryId, foodItemId, newFoodItem } = req.body;
+    console.log(req.body);
+    const inventory = await updateInventoryItem(
+      inventoryId,
+      foodItemId,
+      newFoodItem
+    );
+    res.json(inventory).end();
   } catch (err) {
     next(err);
   }
