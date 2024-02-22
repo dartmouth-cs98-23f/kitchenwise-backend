@@ -2,7 +2,6 @@ import express from "express";
 import {
   createNewShoppingList,
   getUserShoppingLists,
-  getAllUserShoppingItems,
   addShoppingListItems,
   getUserShoppingList,
 } from "../services/shoppinglist-service.js";
@@ -42,6 +41,22 @@ shoppingListRouter.get("/all", async (req, res, next) => {
 });
 
 shoppingListRouter.get("/allitems", async (req, res, next) => {
+  try {
+    const { userId, title } = req.query;
+    const shoppinglist = await getUserShoppingList(userId, title);
+
+    if(shoppinglist.length > 0) {
+      res.json(shoppinglist[0].shoppingListItems).end();
+    } else {
+      res.send(shoppinglist) // this is a an empy list
+    }
+     
+  } catch (err) {
+    next(err);
+  }
+});
+
+shoppingListRouter.get("/import", async (req, res, next) => {
   try {
     const { userId, title } = req.query;
     const shoppinglist = await getUserShoppingList(userId, title);

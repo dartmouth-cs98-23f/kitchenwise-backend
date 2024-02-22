@@ -35,7 +35,7 @@ export let getUserShoppingList = async (userId, listTitle) => {
   }
 };
 
-export const getAllUserShoppingItems = async (userId) => {
+export const getAllUserInventoryItems = async (userId) => {
   const inventories = await getUserInventories(userId);
   let allFoodItems = [];
   for (const inv of inventories) {
