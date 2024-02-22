@@ -2,7 +2,7 @@ import mongoose, { SchemaTypes } from "mongoose";
 import { foodItemSchema } from "./FoodItem.js";
 
 const inventorySchema = new mongoose.Schema({
-  title: String,
+  title: { type: String, required: true },
   ownerId: { type: SchemaTypes.ObjectId, ref: "User" },
   sharedUsers: [{ type: SchemaTypes.ObjectId, ref: "User" }],
   foodItems: [foodItemSchema],

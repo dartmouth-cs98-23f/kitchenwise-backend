@@ -1,8 +1,10 @@
 import express from "express";
 import {
   createNewInventory,
+  deleteInventory,
   getAllUserFoodItems,
   getUserInventories,
+  renameInventory,
 } from "../services/inventory-service.js";
 import { isMongoDuplicate } from "../util.js";
 
@@ -45,6 +47,25 @@ inventoryRouter.post("/create", async (req, res, next) => {
   }
 });
 
-inventoryRouter.get("/items", (req, res) => {});
+inventoryRouter.patch("/rename", async (req, res, next) => {
+  try {
+    const { userId, inventoryId, newTitle } = req.body;
+    const inventory = await renameInventory(inventoryId, newTitle);
+    res.json(inventory).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+inventoryRouter.delete("/delete", async (req, res, next) => {
+  try {
+    const { userId, inventoryId, destinationInventoryId } = req.query;
+    console.log(inventoryId, destinationInventoryId);
+    const result = await deleteInventory(inventoryId, destinationInventoryId);
+    res.json(result).end();
+  } catch (err) {
+    next(err);
+  }
+});
 
 export default inventoryRouter;
