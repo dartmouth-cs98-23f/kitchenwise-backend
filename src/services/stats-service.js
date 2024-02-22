@@ -1,6 +1,29 @@
 import { Statistic, Statistics } from "../models/Statistics.js";
 import { getValidAddActions } from "./addaction-service.js";
 import { getAllUserFoodItems } from "./inventory-service.js";
+import axios, { all } from "axios";
+import dotenv from "dotenv";
+dotenv.config();
+
+const SPOONACULAR_API_KEY = process.env.SPOONACULAR_API_KEY;
+const SPOONACULAR_URL = "https://api.spoonacular.com/recipes/parseIngredients";
+
+const SPOONACULAR_AUTH = {
+  "x-api-key": SPOONACULAR_API_KEY,
+};
+
+// To get from spoonacular
+//  itemInformationList = (
+//   await axios.get(SPOONACULAR_URL, {
+//     params: {
+//       ingredientList: list of food items per line as string,
+//       servings: 1,
+//       includeNutrition: true,
+//       language: "en",
+//     },
+//     headers: SPOONACULAR_AUTH,
+//   })
+// ).data;
 
 export const getStatistics = async (userId) => {
   const allAddActions = await getValidAddActions(userId);
