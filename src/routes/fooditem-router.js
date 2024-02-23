@@ -5,6 +5,7 @@ import {
   removeFoodItem,
   getInventoryById,
   updateInventoryItem,
+  locationNameToInventory,
 } from "../services/inventory-service.js";
 import { createAddAction } from "../services/addaction-service.js";
 
@@ -48,6 +49,22 @@ foodItemRouter.post("/additem", async (req, res, next) => {
   }
 });
 
+foodItemRouter.post("/additems", async (req, res, next) => {
+  try {
+    const { foodItems, userId } = req.body;
+    const addActionPromises = [];
+    for (const item of foodItems) {
+      const { location, ...foodItem } = item;
+      const inventory = await locationNameToInventory(location, userId);
+      addActionPromises.push(createAddAction(foodItem, inventory._id, userId));
+    }
+    const result = Promise.all(addActionPromises);
+    res.json(result).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
 foodItemRouter.delete("/deleteitem", async (req, res, next) => {
   try {
     const { inventoryId, userId, food } = req.body;
@@ -74,7 +91,6 @@ foodItemRouter.delete("/deleteitem", async (req, res, next) => {
 foodItemRouter.patch("/edititem", async (req, res, next) => {
   try {
     const { inventoryId, foodItemId, newFoodItem } = req.body;
-    console.log(req.body);
     const inventory = await updateInventoryItem(
       inventoryId,
       foodItemId,
