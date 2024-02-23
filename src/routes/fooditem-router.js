@@ -14,7 +14,7 @@ const foodItemRouter = express.Router();
 foodItemRouter.post("/additem", async (req, res, next) => {
   try {
     // current schema of `food` is {quantity: string, foodString:string }
-    const { inventoryId, userId, foodItem } = req.body;
+    const { userId, inventoryId, foodItem } = req.body;
     let targetInventory = null;
     // TODO: should the default inventory be a fallback if the specified location can't be found?
     if (inventoryId) {

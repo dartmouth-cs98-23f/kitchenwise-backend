@@ -22,9 +22,8 @@ export const createAddAction = async (food, inventoryId, userId) => {
     unit !== undefined
       ? food
       : parseFoodItem(quantity, foodString, expirationDate);
-      
   // add tags
-  newFoodItem.tags = parseTags(newFoodItem.name, newFoodItem.quantity, newFoodItem.unit);
+  newFoodItem.tags = await parseTags(newFoodItem.name, newFoodItem.quantity, newFoodItem.unit);
 
   const newAddAction = new InventoryAddAction({
     ownerId: new Types.ObjectId(userId),

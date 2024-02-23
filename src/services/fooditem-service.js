@@ -7,7 +7,6 @@ const SPOONACULAR_AUTH = {
   "x-api-key": SPOONACULAR_API_KEY,
 };
 
-
 export const parseQuantity = (rawQuantity) => {
   const quantity = Number(rawQuantity.replace(/[^0-9]/g, ""));
   const unit = rawQuantity.replace(quantity.toString(), "").trim();
@@ -28,22 +27,21 @@ export const parseTags = async(foodName, quantity, unit) => {
   try{
     let nutrition;
     nutrition = (
-      await axios.get(SPOONACULAR_URL + "/parseIngredients", {
+      await axios.post(SPOONACULAR_URL + "/parseIngredients", {
         params: {
           ingredientList: `${quantity} ${unit} ${foodName}`,
           servings: 1,
-          includeNutrition: true,
+          includeNutrition: false,
           language: "en",
         },
         headers: SPOONACULAR_AUTH,
       })
     ).data;
 
-      const aisleList = nutrition.map(item => item.aisle);
+    const aisleList = nutrition.map(item => item.aisle);
 
-      return aisleList;
+    return aisleList;
   } catch (error) {
     console.error('Error parsing tags:', error);
-    throw error; 
   }
 };
