@@ -91,7 +91,6 @@ export const removeFoodItem = async (foodItem, inventoryId, parsed = false) => {
   const { name, quantity, unit } = parsed
     ? foodItem
     : parseFoodItem(foodItem.quantity, foodItem.foodString);
-  console.log(name, quantity, unit);
   const inventory = await getInventoryById(inventoryId);
   for (let i = 0; i < inventory.foodItems.length; i++) {
     const currItem = inventory.foodItems[i];
@@ -204,6 +203,5 @@ export const updateInventoryItem = async (
       ? { ...foodItem, ...newFoodItem }
       : foodItem
   );
-  console.log(foodItemId, newFoodItem, inventory.foodItems);
   return await inventory.save();
 };
