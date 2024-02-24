@@ -31,17 +31,19 @@ export const parseTags = async (foodName, quantity, unit) => {
     nutrition = (
       await axios.post(
         SPOONACULAR_URL + "/parseIngredients",
-        {
+        new URLSearchParams({
           ingredientList: `${quantity} ${unit} ${foodName}`,
           servings: 1,
           includeNutrition: false,
           language: "en",
-        },
+        }),
         { headers: SPOONACULAR_AUTH }
       )
     ).data;
 
-    const aisleList = nutrition.map((item) => item.aisle);
+    const aisleList = nutrition
+      .map((item) => item.aisle)
+      .filter((aisle) => aisle !== undefined);
 
     return aisleList;
   } catch (error) {
