@@ -20,7 +20,7 @@ export const getValidAddActions = async (userId) => {
   try {
     const actions = await InventoryAddAction.find({
       ownerId: new Types.ObjectId(userId),
-      status: { $in: ["CONFIRMED", "REVISED", "UNREVISED"] }
+      status: { $in: ["CONFIRMED", "REVISED", "UNREVISED"] },
     });
     return actions;
   } catch (error) {
@@ -30,12 +30,17 @@ export const getValidAddActions = async (userId) => {
 
 export const createAddAction = async (food, inventoryId, userId) => {
   const { quantity, foodString, expirationDate, unit } = food;
+
   const newFoodItem =
     unit !== undefined
       ? food
       : parseFoodItem(quantity, foodString, expirationDate);
   // add tags
-  newFoodItem.tags = await parseTags(newFoodItem.name, newFoodItem.quantity, newFoodItem.unit);
+  newFoodItem.tags = await parseTags(
+    newFoodItem.name,
+    newFoodItem.quantity,
+    newFoodItem.unit
+  );
 
   const newAddAction = new InventoryAddAction({
     ownerId: new Types.ObjectId(userId),
