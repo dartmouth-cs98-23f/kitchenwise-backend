@@ -6,24 +6,13 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const SPOONACULAR_API_KEY = process.env.SPOONACULAR_API_KEY;
-const SPOONACULAR_URL = "https://api.spoonacular.com/recipes/parseIngredients";
+const SPOONACULAR_URL = "https://api.spoonacular.com/recipes";
+
+const CURRENT_YEAR = new Date().getFullYear();
 
 const SPOONACULAR_AUTH = {
   "x-api-key": SPOONACULAR_API_KEY,
 };
-
-// To get from spoonacular
-//  itemInformationList = (
-//   await axios.get(SPOONACULAR_URL, {
-//     params: {
-//       ingredientList: list of food items per line as string,
-//       servings: 1,
-//       includeNutrition: true,
-//       language: "en",
-//     },
-//     headers: SPOONACULAR_AUTH,
-//   })
-// ).data;
 
 export const getStatistics = async (userId) => {
   const allAddActions = await getValidAddActions(userId);
@@ -36,11 +25,14 @@ export const getStatistics = async (userId) => {
   }
 
     try {
+      const parsedItems = await getParsedItems(allAddActions);
+      const { weightStatistic, costStatistic, macronutrientStatistic } = getSpoonacularStatistics(userId, parsedItems);
+
       const promises = [
         // need spoonacular
-        getFoodInventoryGrowth(userId, allAddActions),
-        getMoneyInventoryGrowth(userId),
-        getMacronutrientComposition(userId),
+        weightStatistic,
+        costStatistic,
+        macronutrientStatistic,
 
         // don't need spoonacular
         getPeakActionMonth(userId, allAddActions), // get peak add action month
@@ -59,26 +51,169 @@ export const getStatistics = async (userId) => {
     }
 };
 
+export const getParsedItems = async (allAddActions) => {
+  try {
+    // Filter add actions for the current year
+    const yearAddActions = allAddActions.filter(action => {
+      return action.date.getFullYear() === CURRENT_YEAR;
+    });
 
-export const getFoodInventoryGrowth = async (userId, allAddActions) => {
+    // Generate the food string for spoonacular
+    let foodString = '';
+    yearAddActions.forEach(action => {
+      const { quantity, unit, name } = action.foodItem;
+      foodString += `${quantity} ${unit} ${name}\n`;
+    });
 
-};
+    itemInformationList = (
+      await axios.post(SPOONACULAR_URL + '/parseIngredients', {
+        params: {
+          ingredientList: foodString,
+          servings: 1,
+          includeNutrition: true,
+          language: "en",
+        },
+        headers: SPOONACULAR_AUTH,
+      })
+    ).data;
 
-export const getMoneyInventoryGrowth = async (userId) => {
+    return itemInformationList;
 
-};
+  } catch (error) {
+    throw error;
+  }
+}
 
-export const getMacronutrientComposition = async (userId) => {
+export const getWeightAndCostStatistics = (userId, itemInformationList) => {
+  // Initialize category weights
+  let grainsWeight = 0;
+  let fruitsVegetablesWeight = 0;
+  let proteinWeight = 0;
+  let dairyWeight = 0;
+  let otherWeight = 0;
 
+  let grainsCost = 0;
+  let fruitsVegetablesCost = 0;
+  let proteinCost = 0;
+  let dairyCost = 0;
+  let otherCost = 0;
+
+  let totalProtein = 0;
+  let totalCarbs = 0;
+  let totalFat = 0;
+
+  const unitToPounds = {
+    'g': 0.00220462, // Grams to pounds
+    'lb': 1,         // Pounds to pounds
+    'kg': 2.20462,   // Kilograms to pounds
+  };
+
+  const unitToDollars = {
+    'US Cents': 0.01, // Cents to dollars
+    'US Dollar': 1,   // Dollar to dollars
+  };
+
+  // Iterate through items
+  itemInformationList.forEach(item => {
+    const weightInLbs = item.weightPerServing.amount * unitToPounds[item.weightPerServing.unit];
+    const costInDollars = item.estimatedCost.value * unitToDollars[item.estimatedCost.unit];
+
+    totalProtein += (item.nutrition.caloricBreakdown.percentProtein / 100) * weightInPounds;
+    totalCarbs += (item.nutrition.caloricBreakdown.percentCarbs / 100) * weightInPounds;
+    totalFat += (item.nutrition.caloricBreakdown.percentFat / 100) * weightInPounds;
+
+    // Categorize item based on aisle
+    switch (item.aisle) {
+      case "Bread":
+      case "Cereal":
+      case "Bakery/Bread":
+      case "Pasta and Rice":
+      case "Baking":
+        grainsWeight += weightInLbs;
+        grainsCost += costInDollars;
+        break;
+      case "Produce":
+      case "Dried Fruits":
+      case "Nuts":
+        fruitsVegetablesWeight += weightInLbs;
+        fruitsVegetablesCost += costInDollars;
+        break;
+      case "Seafood":
+      case "Meat":
+        proteinWeight += weightInLbs;
+        proteinCost += costInDollars;
+        break;
+      case "Cheese":
+      case "Milk":
+      case "Eggs":
+      case "other Dairy":
+        dairyWeight += weightInLbs;
+        dairyCost += costInDollars;
+        break;
+      default:
+        otherWeight += weightInLbs;
+        otherCost += costInDollars;
+        break;
+    }
+  });
+
+  const totalWeight = grainsWeight + fruitsVegetablesWeight + proteinWeight + dairyWeight + otherWeight;
+  const totalCost = grainsCost + fruitsVegetablesCost + proteinCost + dairyCost + otherCost;
+
+  // Recalculate caloric breakdown percentages based on total weight
+  const percentProtein = (totalProtein / totalWeight) * 100;
+  const percentCarbs = (totalCarbs / totalWeight) * 100;
+  const percentFat = (totalFat / totalWeight) * 100;
+  
+  // Create two Statistic objects based on the categories
+  const weightStatistic = new Statistic({
+    statisticId: 1, // the statisticId for peak add action month is 4
+    ownerId: userId,
+    title: "Food Inventory Growth",
+    description: "You’ve added {{addedValue}} lbs of food to your inventory this year.",
+    foodGroupBreakdown: [
+      { category: "Grains", quantity: grainsWeight, unit: "lbs" },
+      { category: "Fruits and Vegetables", quantity: fruitsVegetablesWeight, unit: "lbs" },
+      { category: "Protein", quantity: proteinWeight, unit: "lbs" },
+      { category: "Dairy", quantity: dairyWeight, unit: "lbs" }
+    ],
+    addedValue: totalWeight,
+  });
+
+  const costStatistic = new Statistic({
+    statisticId: 2, // the statisticId for peak add action month is 4
+    ownerId: userId,
+    title: "Monetary Value of Inventory Growth",
+    description: "You’ve added approximately ${{addedValue}} worth of food to your inventory this year.",
+    foodGroupBreakdown: [
+      { category: "Grains", quantity: grainsCost, unit: "$" },
+      { category: "Fruits and Vegetables", quantity: fruitsCost, unit: "$" },
+      { category: "Protein", quantity: proteinCost, unit: "$" },
+      { category: "Dairy", quantity: dairyCost, unit: "$" }
+    ],
+    addedValue: totalCost,
+  });
+
+  const macronutrientStatistic = new Statistic({
+    statisticId: 3, // the statisticId for peak add action month is 4
+    ownerId: userId,
+    title: "Macronutrient Composition",
+    description: "You’ve added {{carbsPercent}}% of carbs, {{proteinPercent}}% of protein, and {{fatPercent}}% of fat to your inventory this year.",
+    carbsPercent: percentCarbs,
+    proteinPercent: percentProtein,
+    fatPercent: percentFat,
+  });
+
+  return { weightStatistic, costStatistic, macronutrientStatistic };
 };
 
 export const getPeakActionMonth = async (userId, actions) => {
   try{
      // Group actions by month and count the number of actions in each month
      const actionsByMonth = {};
-     const currentYear = new Date().getFullYear(); // Get current year
+
      actions.forEach(action => {
-       if (action.date.getFullYear() === currentYear) { // Check if action is in the current year
+       if (action.date.getFullYear() === CURRENT_YEAR) { // Check if action is in the current year
          const monthYear = `${getCapitalizedMonth(action.date)}-${action.date.getFullYear()}`;
          if (!actionsByMonth[monthYear]) {
            actionsByMonth[monthYear] = 1;
@@ -145,9 +280,6 @@ export const getUniqueItemsCount = async (userId, userFoodItems) => {
 // TODO: when remove actions implemented, add logic in here also
 export const getUserRankingsPercent = async (userId) => {
   try {
-    // Get current year
-    const currentYear = new Date().getFullYear();
-
     // Query all users
     const allUsers = await User.find();
 
@@ -157,7 +289,7 @@ export const getUserRankingsPercent = async (userId) => {
       // Get all addActions for this user
       const userActions = await getValidAddActions(user._id);
       // Get only add actions for the current year
-      const actionsInYear = userActions.filter(action => action.date.getFullYear() === currentYear);
+      const actionsInYear = userActions.filter(action => action.date.getFullYear() === CURRENT_YEAR);
       userActionsByYear[user._id] = actionsInYear.length;
     }
 
@@ -171,7 +303,7 @@ export const getUserRankingsPercent = async (userId) => {
     const percentile = (currentUserIndex / sortedUsers.length) * 100;
 
     const statistic = new Statistic({
-      statisticId: 7, // the statisticId for peak add action month is 4
+      statisticId: 7,
       ownerId: userId,
       title: "User Rankings",
       description: "You are in the top {{consumerPercentage}}% of Kitchenwise users",
