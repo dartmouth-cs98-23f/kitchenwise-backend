@@ -15,7 +15,7 @@ const foodItemRouter = express.Router();
 foodItemRouter.post("/additem", async (req, res, next) => {
   try {
     // current schema of `food` is {quantity: string, foodString:string }
-    const { inventoryId, userId, foodItem } = req.body;
+    const { userId, inventoryId, foodItem } = req.body;
     let targetInventory = null;
     // TODO: should the default inventory be a fallback if the specified location can't be found?
     if (inventoryId) {
@@ -53,12 +53,20 @@ foodItemRouter.post("/additems", async (req, res, next) => {
   try {
     const { foodItems, userId } = req.body;
     const addActionPromises = [];
+    const defaultInventory = await getUserDefaultInventory(userId);
     for (const item of foodItems) {
-      const { location, ...foodItem } = item;
+      const { location, name, ...foodItem } = item;
+      foodItem.foodString = name;
       const inventory = await locationNameToInventory(location, userId);
-      addActionPromises.push(createAddAction(foodItem, inventory._id, userId));
+      addActionPromises.push(
+        createAddAction(
+          foodItem,
+          inventory?._id || defaultInventory?._id,
+          userId
+        )
+      );
     }
-    const result = Promise.all(addActionPromises);
+    const result = await Promise.all(addActionPromises);
     res.json(result).end();
   } catch (err) {
     next(err);

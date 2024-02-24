@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
 import InventoryAddAction from "../models/InventoryAddAction.js";
 import { addFoodItem } from "./inventory-service.js";
-import { parseFoodItem } from "./fooditem-service.js";
+import { parseFoodItem, parseTags } from "./fooditem-service.js";
 
 export const getAddActionById = async (addActionId) => {
   return await InventoryAddAction.findById(addActionId);
@@ -16,12 +16,32 @@ export const getPendingAddAction = async (userId) => {
   return actions[0];
 };
 
+export const getValidAddActions = async (userId) => {
+  try {
+    const actions = await InventoryAddAction.find({
+      ownerId: new Types.ObjectId(userId),
+      status: { $in: ["CONFIRMED", "REVISED", "UNREVISED"] },
+    });
+    return actions;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const createAddAction = async (food, inventoryId, userId) => {
   const { quantity, foodString, expirationDate, unit } = food;
+
   const newFoodItem =
     unit !== undefined
       ? food
       : parseFoodItem(quantity, foodString, expirationDate);
+  // add tags
+  newFoodItem.tags = await parseTags(
+    newFoodItem.name,
+    newFoodItem.quantity,
+    newFoodItem.unit
+  );
+
   const newAddAction = new InventoryAddAction({
     ownerId: new Types.ObjectId(userId),
     inventoryId: new Types.ObjectId(inventoryId),
