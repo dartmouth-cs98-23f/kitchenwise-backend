@@ -1,5 +1,5 @@
 import express from "express";
-import { getStatistics } from "../services/stats-service";
+import { getStatistics } from "../services/stats-service.js";
 
 const statsRouter = express.Router();
 
