@@ -53,10 +53,17 @@ foodItemRouter.post("/additems", async (req, res, next) => {
   try {
     const { foodItems, userId } = req.body;
     const addActionPromises = [];
+    const defaultInventory = await getUserDefaultInventory(userId);
     for (const item of foodItems) {
       const { location, ...foodItem } = item;
       const inventory = await locationNameToInventory(location, userId);
-      addActionPromises.push(createAddAction(foodItem, inventory._id, userId));
+      addActionPromises.push(
+        createAddAction(
+          foodItem,
+          inventory?._id || defaultInventory?._id,
+          userId
+        )
+      );
     }
     const result = Promise.all(addActionPromises);
     res.json(result).end();
