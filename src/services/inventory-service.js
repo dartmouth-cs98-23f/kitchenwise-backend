@@ -41,23 +41,32 @@ export const locationNameToInventory = async (locationName, userId) => {
   return bestMatch[1];
 };
 
-// Assumes the foodItem has already been parsed (ie by addaction-service functions)
 export const addFoodItem = async (foodItem, inventoryId) => {
-  const { name, quantity, unit, expirationDate } = foodItem;
+  return await addFoodItems([foodItem], inventoryId);
+};
+
+// Assumes the foodItems have already been parsed (ie by addaction-service functions)
+export const addFoodItems = async (foodItems, inventoryId) => {
   const inventory = await getInventoryById(inventoryId);
-  // Adding to quantity of existing food if it's the same kind
-  for (let i = 0; i < inventory.foodItems.length; i++) {
-    const currItem = inventory.foodItems[i];
-    if (
-      currItem.name == name &&
-      currItem.unit == unit &&
-      currItem.expirationDate?.getTime() == expirationDate?.getTime()
-    ) {
-      inventory.foodItems[i].quantity += quantity;
-      return await inventory.save();
+  for (const foodItem of foodItems) {
+    const { name, quantity, unit, expirationDate } = foodItem;
+    let itemExists = false;
+    // Adding to quantity of existing food if it's the same kind
+    for (let i = 0; i < inventory.foodItems.length; i++) {
+      const currItem = inventory.foodItems[i];
+      if (
+        currItem.name == name &&
+        currItem.unit == unit &&
+        currItem.expirationDate?.getTime() == expirationDate?.getTime()
+      ) {
+        inventory.foodItems[i].quantity += quantity;
+        itemExists = true;
+        break;
+      }
     }
+    if (!itemExists)
+      inventory.foodItems.push({ name, quantity, unit, expirationDate });
   }
-  inventory.foodItems.push(foodItem);
   return await inventory.save();
 };
 
@@ -78,11 +87,10 @@ export const getInventoryFromFood = async (foodItem, userId) => {
 };
 
 // TODO: factor expirationDate into this
-export const deleteFoodItem = async (foodItem, inventoryId) => {
-  const { name, quantity, unit } = parseFoodItem(
-    foodItem.quantity,
-    foodItem.foodString
-  );
+export const removeFoodItem = async (foodItem, inventoryId, parsed = false) => {
+  const { name, quantity, unit } = parsed
+    ? foodItem
+    : parseFoodItem(foodItem.quantity, foodItem.foodString);
   const inventory = await getInventoryById(inventoryId);
   for (let i = 0; i < inventory.foodItems.length; i++) {
     const currItem = inventory.foodItems[i];
@@ -94,6 +102,14 @@ export const deleteFoodItem = async (foodItem, inventoryId) => {
       return await inventory.save();
     }
   }
+};
+
+export const deleteFoodItemById = async (foodItemId, inventoryId) => {
+  const inventory = getInventoryById(inventoryId);
+  inventory.foodItems = inventory.foodItems.filter(
+    (foodItem) => foodItem._id != foodItemId
+  );
+  return await inventory.save();
 };
 
 // Returns a list of n random foodItems a user has in their inventories
@@ -142,7 +158,14 @@ export const getAllUserFoodItems = async (userId) => {
   const inventories = await getUserInventories(userId);
   let allFoodItems = [];
   for (const inv of inventories) {
-    allFoodItems = allFoodItems.concat(inv.foodItems);
+    allFoodItems = allFoodItems.concat(
+      // we attach the inventory title instead of the id because the title is unique to the user and easier to filter by in pantry page
+      inv.foodItems.map((item) => ({
+        ...item._doc,
+        inventoryTitle: inv.title,
+        inventoryId: inv._id,
+      }))
+    );
   }
   return allFoodItems;
 };
@@ -151,5 +174,34 @@ export const createNewInventory = async (title, userId) => {
   const inventory = new Inventory();
   inventory.title = title;
   inventory.ownerId = new Types.ObjectId(userId);
+  return await inventory.save();
+};
+
+export const renameInventory = async (inventoryId, newTitle) => {
+  const inventory = await getInventoryById(inventoryId);
+  inventory.title = newTitle;
+  return await inventory.save();
+};
+
+export const deleteInventory = async (inventoryId, destinationInventoryId) => {
+  const inventoryToDelete = await getInventoryById(inventoryId);
+  const destinationInventory = await addFoodItems(
+    inventoryToDelete.foodItems,
+    destinationInventoryId
+  );
+  return await Inventory.deleteOne({ _id: inventoryId });
+};
+
+export const updateInventoryItem = async (
+  inventoryId,
+  foodItemId,
+  newFoodItem
+) => {
+  const inventory = await getInventoryById(inventoryId);
+  inventory.foodItems = inventory.foodItems.map((foodItem) =>
+    foodItem._id.toString() === foodItemId
+      ? { ...foodItem, ...newFoodItem }
+      : foodItem
+  );
   return await inventory.save();
 };

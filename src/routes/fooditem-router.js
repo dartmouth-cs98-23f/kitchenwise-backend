@@ -2,8 +2,10 @@ import express from "express";
 import {
   getUserDefaultInventory,
   getInventoryFromFood,
-  deleteFoodItem,
+  removeFoodItem,
   getInventoryById,
+  updateInventoryItem,
+  locationNameToInventory,
 } from "../services/inventory-service.js";
 import { createAddAction } from "../services/addaction-service.js";
 
@@ -13,7 +15,7 @@ const foodItemRouter = express.Router();
 foodItemRouter.post("/additem", async (req, res, next) => {
   try {
     // current schema of `food` is {quantity: string, foodString:string }
-    const { inventoryId, userId, food } = req.body;
+    const { inventoryId, userId, foodItem } = req.body;
     let targetInventory = null;
     // TODO: should the default inventory be a fallback if the specified location can't be found?
     if (inventoryId) {
@@ -26,18 +28,38 @@ foodItemRouter.post("/additem", async (req, res, next) => {
         .status(404)
         .json({ message: `Inventory '${location}' not found.` });
     }
-    const addAction = await createAddAction(food, targetInventory._id, userId);
+    const addAction = await createAddAction(
+      foodItem,
+      targetInventory._id,
+      userId
+    );
     if (addAction) {
       return res
         .status(200)
-        .json({ location: targetInventory.title, food, action: addAction })
+        .json({ location: targetInventory.title, foodItem, action: addAction })
         .end();
     } else {
       return res
         .status(500)
-        .json({ message: `Unable to add ${food.title} to inventory` })
+        .json({ message: `Unable to add ${foodItem.name} to inventory` })
         .end();
     }
+  } catch (err) {
+    next(err);
+  }
+});
+
+foodItemRouter.post("/additems", async (req, res, next) => {
+  try {
+    const { foodItems, userId } = req.body;
+    const addActionPromises = [];
+    for (const item of foodItems) {
+      const { location, ...foodItem } = item;
+      const inventory = await locationNameToInventory(location, userId);
+      addActionPromises.push(createAddAction(foodItem, inventory._id, userId));
+    }
+    const result = Promise.all(addActionPromises);
+    res.json(result).end();
   } catch (err) {
     next(err);
   }
@@ -56,11 +78,25 @@ foodItemRouter.delete("/deleteitem", async (req, res, next) => {
     }
     if (Array.isArray(foodLocation))
       return res.status(300).json({ inventoryChoices: foodLocation });
-    const updatedInventory = await deleteFoodItem(food, foodLocation._id);
+    const updatedInventory = await removeFoodItem(food, foodLocation._id);
     return res
       .status(200)
       .json({ location: updatedInventory.title, food })
       .end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+foodItemRouter.patch("/edititem", async (req, res, next) => {
+  try {
+    const { inventoryId, foodItemId, newFoodItem } = req.body;
+    const inventory = await updateInventoryItem(
+      inventoryId,
+      foodItemId,
+      newFoodItem
+    );
+    res.json(inventory).end();
   } catch (err) {
     next(err);
   }

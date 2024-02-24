@@ -7,7 +7,7 @@ export const inventoryRemoveActionSchema = new mongoose.Schema({
   inventoryId: { type: SchemaTypes.ObjectId, ref: "Inventory" },
   foodItem: foodItemSchema,
   date: Date,
-  removeReason: { type: String, enum: removeReasons },
+  removeReason: { type: String, enum: removeReasons, default: "TRASH" },
   status: { type: String, enum: actionStatuses, default: "PENDING" },
 });
 

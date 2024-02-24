@@ -29,8 +29,11 @@ export const getValidAddActions = async (userId) => {
 };
 
 export const createAddAction = async (food, inventoryId, userId) => {
-  const { quantity, foodString, expirationDate } = food;
-  const newFoodItem = parseFoodItem(quantity, foodString, expirationDate);
+  const { quantity, foodString, expirationDate, unit } = food;
+  const newFoodItem =
+    unit !== undefined
+      ? food
+      : parseFoodItem(quantity, foodString, expirationDate);
   const newAddAction = new InventoryAddAction({
     ownerId: new Types.ObjectId(userId),
     inventoryId: new Types.ObjectId(inventoryId),
@@ -87,7 +90,7 @@ export const unreviseUserPendingAction = async (userId) => {
 };
 
 // Number of seconds before actions expire
-const actionExpireTime = 30;
+const actionExpireTime = 0;
 
 // This function will add unrevised actions to the inventory after they expire. intended to be run on an interval
 export const unrevisedAddActionListener = async () => {

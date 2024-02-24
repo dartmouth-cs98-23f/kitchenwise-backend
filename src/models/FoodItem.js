@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 import { ServerError } from "../util.js";
 
 export const foodItemSchema = new mongoose.Schema({
-  name: String,
-  quantity: Number,
+  name: { type: String, required: true },
+  quantity: { type: Number, required: true, default: 1 },
   unit: String,
   tags: [String],
   expirationDate: Date,
@@ -16,6 +16,6 @@ foodItemSchema.pre("save", function (next) {
   next();
 });
 
-// const FoodItem = mongoose.model("FoodItem", foodItemSchema);
+const FoodItem = mongoose.model("FoodItem", foodItemSchema);
 
-// export default FoodItem;
+export default FoodItem;
