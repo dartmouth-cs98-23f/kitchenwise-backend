@@ -7,6 +7,7 @@ import userRouter from "./user-router.js";
 import addActionRouter from "./addaction-router.js";
 import shoppingListRouter from "./shoppinglist-router.js";
 import removeActionRouter from "./removeaction-router.js";
+import statsRouter from "./stats-router.js";
 
 const indexRouter = express.Router();
 
@@ -23,5 +24,6 @@ indexRouter.use("/user", userRouter);
 indexRouter.use("/addaction", addActionRouter);
 indexRouter.use("/shoppinglist", shoppingListRouter);
 indexRouter.use("/removeaction", removeActionRouter);
+indexRouter.use("/statistics", statsRouter);
 
 export default indexRouter;
