@@ -55,7 +55,7 @@ export const addFoodItems = async (foodItems, inventoryId) => {
     for (let i = 0; i < inventory.foodItems.length; i++) {
       const currItem = inventory.foodItems[i];
       if (
-        currItem.name == name &&
+        currItem.name.toLowerCase() == name.toLowerCase() &&
         currItem.unit == unit &&
         currItem.expirationDate?.getTime() == expirationDate?.getTime()
       ) {
