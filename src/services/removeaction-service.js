@@ -6,6 +6,18 @@ export const getRemoveActionById = async (removeActionId) => {
   return await InventoryRemoveAction.findById(removeActionId);
 };
 
+export const getValidRemoveActions = async (userId) => {
+  try {
+    const actions = await InventoryRemoveAction.find({
+      ownerId: new Types.ObjectId(userId),
+      status: { $in: ["CONFIRMED", "REVISED", "UNREVISED"] }
+    });
+    return actions;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const createRemoveAction = async (foodItem, inventoryId, userId) => {
   const removeAction = new InventoryRemoveAction();
   removeAction.ownerId = new Types.ObjectId(userId);

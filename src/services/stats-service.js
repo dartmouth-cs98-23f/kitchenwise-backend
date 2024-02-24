@@ -3,6 +3,7 @@ import { getValidAddActions } from "./addaction-service.js";
 import { getAllUserFoodItems } from "./inventory-service.js";
 import axios, { all } from "axios";
 import dotenv from "dotenv";
+import { getValidRemoveActions } from "./removeaction-service.js";
 dotenv.config();
 
 const SPOONACULAR_API_KEY = process.env.SPOONACULAR_API_KEY;
@@ -10,42 +11,46 @@ const SPOONACULAR_URL = "https://api.spoonacular.com/recipes";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
+// These are statistics ids
+// TODO: scrap statistics ids entirely
+const PEAK_ADD_ACTIONS = 4;
+const PEAK_REMOVE_ACTIONS = 5;
+
 const SPOONACULAR_AUTH = {
   "x-api-key": SPOONACULAR_API_KEY,
 };
 
 export const getStatistics = async (userId) => {
-  const allAddActions = await getValidAddActions(userId);
-  const allUserFoodItems = await getAllUserFoodItems(userId);
-
+  // try to use existing statistics if recently updated
   const existingStatistics = await useExistingStatistics(userId);
-
   if (existingStatistics){
     return existingStatistics.statistics;
   }
 
-    try {
-      const parsedItems = await getParsedItems(allAddActions);
-      const { weightStatistic, costStatistic, macronutrientStatistic } = getSpoonacularStatistics(userId, parsedItems);
+  const allAddActions = await getValidAddActions(userId);
+  const allRemoveActions = await getValidRemoveActions(userId);
+  const allUserFoodItems = await getAllUserFoodItems(userId);
 
-      const promises = [
-        // need spoonacular
-        weightStatistic,
-        costStatistic,
-        macronutrientStatistic,
+  try {
+    const parsedItems = await getParsedItems(allAddActions);
+    const { weightStatistic, costStatistic, macronutrientStatistic } = getSpoonacularStatistics(userId, parsedItems);
 
-        // don't need spoonacular
-        getPeakActionMonth(userId, allAddActions), // get peak add action month
-        getPeakRemoveActionMonth(userId),  // we dont have remove actions in database
-        getUniqueItemsCount(userId, allUserFoodItems),  // just counting all inventory food items
-        getUserRankingsPercent(userId, allAddActions),  // just counting add actions per user
-      ];
-  
-      const results = await Promise.all(promises);
-      saveStatistics(userId, results);
-  
-      return results;
+    const promises = [
+      // need spoonacular
+      weightStatistic,
+      costStatistic,
+      macronutrientStatistic,
 
+      // don't need spoonacular
+      getPeakActionMonth(userId, allAddActions, PEAK_ADD_ACTIONS), // get peak add action month
+      getPeakActionMonth(userId, allRemoveActions, PEAK_REMOVE_ACTIONS),  // get peak remove action month
+      getUniqueItemsCount(userId, allUserFoodItems),  // just counting all inventory food items
+      getUserRankingsPercent(userId, allAddActions),  // just counting add actions per user
+    ];
+
+    const results = await Promise.all(promises);
+    saveStatistics(userId, results);
+    return results;
     } catch (error) {
       throw error;
     }
@@ -144,9 +149,7 @@ export const getWeightAndCostStatistics = (userId, itemInformationList) => {
         proteinCost += costInDollars;
         break;
       case "Cheese":
-      case "Milk":
-      case "Eggs":
-      case "other Dairy":
+      case "Milk, Eggs, Other Dairy":
         dairyWeight += weightInLbs;
         dairyCost += costInDollars;
         break;
@@ -207,7 +210,7 @@ export const getWeightAndCostStatistics = (userId, itemInformationList) => {
   return { weightStatistic, costStatistic, macronutrientStatistic };
 };
 
-export const getPeakActionMonth = async (userId, actions) => {
+export const getPeakActionMonth = async (userId, actions, statsId) => {
   try{
      // Group actions by month and count the number of actions in each month
      const actionsByMonth = {};
@@ -233,32 +236,30 @@ export const getPeakActionMonth = async (userId, actions) => {
       }
     }
  
-     // Create a Statistic object based on the peak month found
-     const statistic = new Statistic({
-      statisticId: 4, // the statisticId for peak add action month is 4
-      ownerId: userId,
-      title: "Peak Inventory Addition Month",
-      description: "You added the most items to your inventory in:",
-      peakMonth: peakMonth
-    });
-    return statistic;
+    let statistic;
 
+    if (statsId == PEAK_ADD_ACTIONS){
+      statistic = new Statistic({
+        statisticId: statsId,
+        ownerId: userId,
+        title: "Peak Inventory Addition Month",
+        description: "You added the most items to your inventory in:",
+        peakMonth: peakMonth
+      });
+    }
+    else{
+      statistic = new Statistic({
+        statisticId: statsId, // the statisticId for peak add action month is 4
+        ownerId: userId,
+        title: "Peak Consumption Month",
+        description: "You consumed the most items from your inventory in:",
+        peakMonth: peakMonth,
+      });
+    }
+    return statistic;
    } catch (error) {
      throw error;
    }
-};
-
-export const getPeakRemoveActionMonth = async (userId) => {
-  // when remove actions implemented, just call getPeakActionMonth(userRemoveActions)
-  // now, we just return a dummy statistic
-  const statistic = new Statistic({
-    statisticId: 5, // the statisticId for peak add action month is 4
-    ownerId: userId,
-    title: "Peak Consumption Month",
-    description: "You consumed the most items from your inventory in:",
-    peakMonth: getCapitalizedMonth(Date.now),
-  });
-  return statistic;
 };
 
 export const getUniqueItemsCount = async (userId, userFoodItems) => {
@@ -324,7 +325,7 @@ const getCapitalizedMonth = (date) => {
 };
 
 
-// save newly computed statistics to database
+// Save newly computed statistics to database
 const saveStatistics = async (userId, results) => {
   try {
     const statistics = new Statistics({
