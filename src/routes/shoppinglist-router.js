@@ -109,16 +109,61 @@ shoppingListRouter.delete("/delete", async (req, res, next) => {
   }
 })
 
+// Route to handle exporting shopping list items to an inventory
+shoppingListRouter.post("/export", async (req, res) => {
+  const { userId, listName, items, inv } = req.body;
+  let inventoryName = inv.title;
+  try {
+    // Find the inventory by name and owner ID
+    const inventory = await Inventory.findOne({ title: inventoryName, ownerId: userId });
+  
+    if (!inventory) {
+      return res.status(404).json({ message: 'Inventory not found' });
+    }
+
+    // Iterate over each item and add it to the inventory
+    for (const item of req.body.items) {
+      const { title, amount, price, importance } = item;
+
+      // Check if an item with the same name and title exists
+      const existingItemIndex = inventory.foodItems.findIndex(existingItem => existingItem.name === title);
+      
+      if (existingItemIndex !== -1) {
+        // If the item exists, update its quantity
+        inventory.foodItems[existingItemIndex].quantity += amount;
+      } else {
+        // If the item does not exist, add it to the inventory
+        const foodItem = new FoodItem({
+          name: title,
+          quantity: amount,
+          // You may want to adjust the unit, tags, and expirationDate based on your requirements
+        });
+        inventory.foodItems.push(foodItem);
+      }
+
+      // Clear the shopping list item from the shopping list
+      await deleteItemFromList(listName, title); // Assuming 'deleteItemFromList' function exists
+    }
+
+    // Save the inventory with the new foodItems
+    await inventory.save();
+
+    res.status(200).json({ message: 'Items exported successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // Route to import items from user history into a shopping list
 shoppingListRouter.post("/import", async (req, res) => {
-  const { userId, shoppingListName } = req.body;
+  const { userId, title} = req.body;
 
   try {
     // Find all add actions  and remove actions for the user
     const addActions = await InventoryAddAction.find({ ownerId: userId });
     const removeActions = await InventoryRemoveAction.find({ ownerId: userId });
 
-    console.log(addActions.length)
     if (addActions.length < 1 || removeActions.length < 1) {
       return res.status(400).json({ message: 'No User History, add items manualy' });
     }
@@ -163,7 +208,7 @@ shoppingListRouter.post("/import", async (req, res) => {
 
     // Create a new shopping list and add the items to it
     if (itemsToAdd.length > 0) {
-      let shoppingList = await createNewShoppingList(shoppingListName, userId);
+      let shoppingList = await createNewShoppingList(title, userId);
       shoppingList = await addShoppingListItems(userId, shoppingList.title, itemsToAdd);
       return res.send(shoppingList).status(200);
     } else {

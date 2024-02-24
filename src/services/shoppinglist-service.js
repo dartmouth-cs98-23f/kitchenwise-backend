@@ -5,7 +5,6 @@ import InventoryAddAction from "../models/InventoryAddAction.js";
 import InventoryRemoveAction from "../models/InventoryRemoveAction.js";
 
 export const createNewShoppingList = async (listTitle, userId) => {
-  console.log("creating new list")
   const list = new ShoppingList();
   list.title = listTitle;
   list.ownerId = new Types.ObjectId(userId);
@@ -58,7 +57,6 @@ export const addShoppingListItem= async (userId, title, foodItem, foodAmount) =>
   // if (rlist == null) {
   //   rlist = await createNewShoppingList(title, userId);
   // }
-  console.log("rlist", rlist)
   // TODO: Find a faster way to do this, db query probably is faster with hashing
   let flag = 1;
   for (let i = 0; i < rlist.shoppingListItems.length; i++) {
@@ -113,16 +111,16 @@ export const addShoppingListItems = async (userId, shoppingListName, itemsToAdd)
 export const deleteItemFromList = async (shoppingListName, itemName) => {
    // Find the shopping list by name
    const shoppingList = await ShoppingList.findOne({ title: shoppingListName });
-
+  
   if (!shoppingList) {
-    return res.status(404).json({ message: 'Shopping list not found' });
+    return { status: 400, message: 'Shopping list not found' };
   }
 
   // Find the index of the item to delete
   const index = shoppingList.shoppingListItems.findIndex(item => item.title.toString() === itemName);
 
   if (index === -1) {
-    return res.status(404).json({ message: 'Item not found in shopping list' });
+    return { status: 400, message: 'Item not found in shopping list' };
   }
 
   // Remove the item from the shoppingListItems array
