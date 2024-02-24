@@ -13,7 +13,6 @@ removeActionRouter.get("/history", (req, res, next) => {
 removeActionRouter.post("/create", async (req, res, next) => {
   try {
     const { foodItem, inventoryId, userId } = req.body;
-    console.log(req.body);
     const result = await createRemoveAction(foodItem, inventoryId, userId);
     res.json(result).end();
   } catch (err) {

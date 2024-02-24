@@ -60,7 +60,6 @@ inventoryRouter.patch("/rename", async (req, res, next) => {
 inventoryRouter.delete("/delete", async (req, res, next) => {
   try {
     const { userId, inventoryId, destinationInventoryId } = req.query;
-    console.log(inventoryId, destinationInventoryId);
     const result = await deleteInventory(inventoryId, destinationInventoryId);
     res.json(result).end();
   } catch (err) {
