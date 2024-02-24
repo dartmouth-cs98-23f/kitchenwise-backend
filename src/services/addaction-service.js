@@ -46,7 +46,6 @@ export const createAddAction = async (food, inventoryId, userId) => {
     ownerId: new Types.ObjectId(userId),
     inventoryId: new Types.ObjectId(inventoryId),
     foodItem: newFoodItem,
-    // TODO: use spoonacular here to get tags
     date: new Date(),
   });
   await unreviseUserPendingAction(userId);

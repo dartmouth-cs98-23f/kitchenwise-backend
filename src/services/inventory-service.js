@@ -49,13 +49,13 @@ export const addFoodItem = async (foodItem, inventoryId) => {
 export const addFoodItems = async (foodItems, inventoryId) => {
   const inventory = await getInventoryById(inventoryId);
   for (const foodItem of foodItems) {
-    const { name, quantity, unit, expirationDate } = foodItem;
+    const { name, quantity, unit, tags, expirationDate } = foodItem;
     let itemExists = false;
     // Adding to quantity of existing food if it's the same kind
     for (let i = 0; i < inventory.foodItems.length; i++) {
       const currItem = inventory.foodItems[i];
       if (
-        currItem.name == name &&
+        currItem.name.toLowerCase() == name.toLowerCase() &&
         currItem.unit == unit &&
         currItem.expirationDate?.getTime() == expirationDate?.getTime()
       ) {
@@ -65,7 +65,7 @@ export const addFoodItems = async (foodItems, inventoryId) => {
       }
     }
     if (!itemExists)
-      inventory.foodItems.push({ name, quantity, unit, expirationDate });
+      inventory.foodItems.push({ name, quantity, unit, tags, expirationDate });
   }
   return await inventory.save();
 };

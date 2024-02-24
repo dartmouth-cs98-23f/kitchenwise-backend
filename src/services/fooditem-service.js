@@ -39,13 +39,13 @@ export const parseTags = async (foodName, quantity, unit) => {
           includeNutrition: false,
           language: "en",
         }),
-        {
-          headers: SPOONACULAR_AUTH,
-        }
+        { headers: SPOONACULAR_AUTH }
       )
     ).data;
 
-    const aisleList = nutrition.map((item) => item.aisle);
+    const aisleList = nutrition
+      .map((item) => item.aisle)
+      .filter((aisle) => aisle !== undefined);
 
     return aisleList;
   } catch (error) {
