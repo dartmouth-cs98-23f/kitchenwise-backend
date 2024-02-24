@@ -1,5 +1,6 @@
 import axios from "axios";
 import dotenv from "dotenv";
+import { wordsToNumbers } from "words-to-numbers";
 dotenv.config();
 
 const SPOONACULAR_API_KEY = process.env.SPOONACULAR_API_KEY;
@@ -10,6 +11,7 @@ const SPOONACULAR_AUTH = {
 };
 
 export const parseQuantity = (rawQuantity) => {
+  rawQuantity = wordsToNumbers(rawQuantity);
   const quantity = Number(rawQuantity.replace(/[^0-9]/g, ""));
   const unit = rawQuantity.replace(quantity.toString(), "").trim();
   return { quantity, unit };
