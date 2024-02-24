@@ -25,25 +25,26 @@ export const parseFoodItem = (
   return { quantity, unit, name, expirationDate };
 };
 
-export const parseTags = async(foodName, quantity, unit) => {
-  try{
+export const parseTags = async (foodName, quantity, unit) => {
+  try {
     let nutrition;
     nutrition = (
-      await axios.post(SPOONACULAR_URL + "/parseIngredients", {
-        params: {
+      await axios.post(
+        SPOONACULAR_URL + "/parseIngredients",
+        {
           ingredientList: `${quantity} ${unit} ${foodName}`,
           servings: 1,
           includeNutrition: false,
           language: "en",
         },
-        headers: SPOONACULAR_AUTH,
-      })
+        { headers: SPOONACULAR_AUTH }
+      )
     ).data;
 
-    const aisleList = nutrition.map(item => item.aisle);
+    const aisleList = nutrition.map((item) => item.aisle);
 
     return aisleList;
   } catch (error) {
-    console.error('Error parsing tags:', error);
+    console.error("Error parsing tags:", error);
   }
 };
