@@ -30,8 +30,8 @@ When you call the function,
 2. [output]: dictionary(food items, quantities)
 
 
-## Example
-### Input
+## Examples
+### Input (naiveReader)
 testfile = 'images\weirdReceipt2.jpg'
 
 result = parseData(testfile)
@@ -39,7 +39,7 @@ result = parseData(testfile)
 for key, value in result.items():
     print(f"Key: {key}, Value: {value}")
 
-### Output
+### Output (naiveReader)
 - Key: Qty, Value: 1
 - Key: Item, Value: 1
 - Key: TYRI, Value: 1
@@ -55,7 +55,7 @@ for key, value in result.items():
 
 ---
 
-### Input
+### Input (smartReader)
 testfile = 'images/grocery-receipt-3.jpg'
 
 result = parseData(testfile)
@@ -63,7 +63,7 @@ result = parseData(testfile)
 for key, value in result.items():
     print(f"Key: {key}, Value: {value}")
 
-### Output
+### Output (smartReader)
 - Key: AN 9 GRAIN BREAD, Value: 1
 - Key: ND HONEY CURED HAM, Value: 2.54
 - Key: TOI TURKEY, Value: 7.06
