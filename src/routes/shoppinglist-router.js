@@ -5,7 +5,7 @@ import {
   addShoppingListItem,
   getUserShoppingList,
   deleteItemFromList,
-  addShoppingListItems
+  addShoppingListItems,
 } from "../services/shoppinglist-service.js";
 import ShoppingList from "../models/ShoppingList.js";
 import { isMongoDuplicate } from "../util.js";
@@ -33,9 +33,7 @@ shoppingListRouter.post("/create", async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-
 });
-
 
 shoppingListRouter.get("/all", async (req, res, next) => {
   try {
@@ -55,9 +53,8 @@ shoppingListRouter.get("/allitems", async (req, res, next) => {
     if (shoppinglist.length > 0) {
       res.json(shoppinglist[0].shoppingListItems).end();
     } else {
-      res.send(shoppinglist) // this is a an empy list
+      res.send(shoppinglist); // this is a an empy list
     }
-
   } catch (err) {
     next(err);
   }
@@ -71,20 +68,23 @@ shoppingListRouter.get("/import", async (req, res, next) => {
     if (shoppinglist.length > 0) {
       res.json(shoppinglist[0].shoppingListItems).end();
     } else {
-      res.send(shoppinglist) // this is a an empy list
+      res.send(shoppinglist); // this is a an empy list
     }
-
   } catch (err) {
     next(err);
   }
 });
 
-
 shoppingListRouter.put("/additem", async (req, res, next) => {
   try {
     const { userId, title, foodItem, foodAmount } = req.body;
-    const items = await addShoppingListItem(userId, title, foodItem, foodAmount)
-    res.json(items).end()
+    const items = await addShoppingListItem(
+      userId,
+      title,
+      foodItem,
+      foodAmount
+    );
+    res.json(items).end();
   } catch (err) {
     next(err);
   }
@@ -95,30 +95,35 @@ shoppingListRouter.delete("/delete", async (req, res, next) => {
 
   try {
     // Find the shopping list based on userId and title
-    const shoppingList = await ShoppingList.findOne({ ownerId: new Types.ObjectId(userId), title });
+    const shoppingList = await ShoppingList.findOne({
+      ownerId: new Types.ObjectId(userId),
+      title,
+    });
 
     deleteItemsFromList(shoppingList);
 
     // Save the updated shopping list
     await shoppingList.save();
 
-    return res.status(200).json({ message: 'Item deleted from shopping list' });
+    return res.status(200).json({ message: "Item deleted from shopping list" });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: 'Internal server error' });
+    next(err);
   }
-})
+});
 
 // Route to handle exporting shopping list items to an inventory
-shoppingListRouter.post("/export", async (req, res) => {
+shoppingListRouter.post("/export", async (req, res, next) => {
   const { userId, listName, items, inv } = req.body;
   let inventoryName = inv.title;
   try {
     // Find the inventory by name and owner ID
-    const inventory = await Inventory.findOne({ title: inventoryName, ownerId: userId });
-  
+    const inventory = await Inventory.findOne({
+      title: inventoryName,
+      ownerId: userId,
+    });
+
     if (!inventory) {
-      return res.status(404).json({ message: 'Inventory not found' });
+      return res.status(404).json({ message: "Inventory not found" });
     }
 
     // Iterate over each item and add it to the inventory
@@ -126,8 +131,10 @@ shoppingListRouter.post("/export", async (req, res) => {
       const { title, amount, price, importance } = item;
 
       // Check if an item with the same name and title exists
-      const existingItemIndex = inventory.foodItems.findIndex(existingItem => existingItem.name === title);
-      
+      const existingItemIndex = inventory.foodItems.findIndex(
+        (existingItem) => existingItem.name === title
+      );
+
       if (existingItemIndex !== -1) {
         // If the item exists, update its quantity
         inventory.foodItems[existingItemIndex].quantity += amount;
@@ -148,16 +155,16 @@ shoppingListRouter.post("/export", async (req, res) => {
     // Save the inventory with the new foodItems
     await inventory.save();
 
-    res.status(200).json({ message: 'Items exported successfully' });
+    res.status(200).json({ message: "Items exported successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    next(err);
   }
 });
 
 // Route to import items from user history into a shopping list
 shoppingListRouter.post("/import", async (req, res) => {
-  const { userId, title} = req.body;
+  const { userId, title } = req.body;
 
   try {
     // Find all add actions  and remove actions for the user
@@ -165,12 +172,13 @@ shoppingListRouter.post("/import", async (req, res) => {
     const removeActions = await InventoryRemoveAction.find({ ownerId: userId });
 
     if (addActions.length < 1 || removeActions.length < 1) {
-      return res.status(400).json({ message: 'No User History, add items manualy' });
+      return res
+        .status(400)
+        .json({ message: "No User History, add items manualy" });
     }
 
     // Initialize a map to store item scores based on their names
     const itemScores = new Map();
-
 
     // Compute scores for items based on add and remove actions
     addActions.forEach((addAction) => {
@@ -185,45 +193,46 @@ shoppingListRouter.post("/import", async (req, res) => {
       itemScores.set(itemName, score + 2);
     });
 
-
     // Filter items based on score threshold and add them to the shopping list
     const itemsToAdd = [];
     itemScores.forEach((score, itemName) => {
-      if (score >= 3) { // Change the threshold as needed
+      if (score >= 3) {
+        // Change the threshold as needed
         // Find the most recently used quantity from addActions
         const mostRecentAddAction = addActions
           .filter((addAction) => addAction.foodItem.name === itemName)
           .sort((a, b) => b.date - a.date)[0]; // Sort by date in descending order and get the first item
-        const quantity = mostRecentAddAction ? mostRecentAddAction.foodItem.quantity : 1;
+        const quantity = mostRecentAddAction
+          ? mostRecentAddAction.foodItem.quantity
+          : 1;
         const newItem = new ShoppingListItem({
           title: itemName,
           amount: quantity,
           price: 0,
           importance: 0,
-        })
+        });
         itemsToAdd.push(newItem);
       }
     });
 
-
     // Create a new shopping list and add the items to it
     if (itemsToAdd.length > 0) {
       let shoppingList = await createNewShoppingList(title, userId);
-      shoppingList = await addShoppingListItems(userId, shoppingList.title, itemsToAdd);
+      shoppingList = await addShoppingListItems(
+        userId,
+        shoppingList.title,
+        itemsToAdd
+      );
       return res.send(shoppingList).status(200);
     } else {
-      return res.status(400).json({ message: 'Need to build a history add items manually' });
+      return res
+        .status(400)
+        .json({ message: "Need to build a history add items manually" });
     }
-
-
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    next(error);
   }
 });
-
-
-
-
 
 export default shoppingListRouter;
