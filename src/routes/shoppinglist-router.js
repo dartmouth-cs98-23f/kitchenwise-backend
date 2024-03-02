@@ -90,6 +90,28 @@ shoppingListRouter.put("/additem", async (req, res, next) => {
   }
 });
 
+shoppingListRouter.delete('/deletelist', async (req, res, next) => {
+  const { listName } = req.body;
+  console.log(req.body)
+  try {
+    // Find the shopping list by ID and delete it
+    // Find the shopping list by name and delete it
+    const deletedList = await ShoppingList.findOneAndDelete({ title: listName });
+    console.log(listName)
+    if (!deletedList) {
+      // If the shopping list was not found, return a 404 status
+      return res.status(404).json({ message: 'Shopping list not found' });
+    }
+
+    // Return a success message
+    return res.json({ message: 'Shopping list deleted successfully' });
+  } catch (error) {
+    // Return an error message if something went wrong
+    console.error('Error deleting shopping list:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 shoppingListRouter.delete("/delete", async (req, res, next) => {
   const { userId, title, itemId } = req.body;
 
