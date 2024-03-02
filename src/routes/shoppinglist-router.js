@@ -143,13 +143,12 @@ shoppingListRouter.post("/export", async (req, res, next) => {
         const foodItem = new FoodItem({
           name: title,
           quantity: amount,
-          // You may want to adjust the unit, tags, and expirationDate based on your requirements
         });
         inventory.foodItems.push(foodItem);
       }
 
       // Clear the shopping list item from the shopping list
-      await deleteItemFromList(listName, title); // Assuming 'deleteItemFromList' function exists
+      await deleteItemFromList(listName, title); 
     }
 
     // Save the inventory with the new foodItems
@@ -197,7 +196,7 @@ shoppingListRouter.post("/import", async (req, res) => {
     const itemsToAdd = [];
     itemScores.forEach((score, itemName) => {
       if (score >= 3) {
-        // Change the threshold as needed
+        // TODO: might need to change threshold 
         // Find the most recently used quantity from addActions
         const mostRecentAddAction = addActions
           .filter((addAction) => addAction.foodItem.name === itemName)

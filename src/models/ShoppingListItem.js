@@ -6,6 +6,8 @@ export const shoppingListItemSchema = new mongoose.Schema({
   amount: Number,
   price: Number,
   importance: Number,
+  unit: String,
+  tags: [String]
 });
 
 const ShoppingListItem = mongoose.model("ShoppingListItem", shoppingListItemSchema);
