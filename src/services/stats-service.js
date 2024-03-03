@@ -23,10 +23,10 @@ const SPOONACULAR_AUTH = {
 
 export const getStatistics = async (userId) => {
   // use existing statistics if updated less than a month ago
-  const existingStatistics = await useExistingStatistics(userId);
-  if (existingStatistics){
-    return existingStatistics.statistics;
-  }
+  // const existingStatistics = await useExistingStatistics(userId);
+  // if (existingStatistics){
+  //   return existingStatistics.statistics;
+  // }
 
   const allAddActions = await getValidAddActions(userId);
   const allRemoveActions = await getValidRemoveActions(userId);
