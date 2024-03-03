@@ -3,6 +3,9 @@ import { Types } from "mongoose";
 import ShoppingListItem from "../models/ShoppingListItem.js";
 import InventoryAddAction from "../models/InventoryAddAction.js";
 import InventoryRemoveAction from "../models/InventoryRemoveAction.js";
+import { parseTags } from "./fooditem-service.js";
+
+
 
 export const createNewShoppingList = async (listTitle, userId) => {
   const list = new ShoppingList();
@@ -51,7 +54,9 @@ export const addShoppingListItem= async (userId, title, foodItem, foodAmount) =>
   item.amount = foodAmount;
   item.importance = 0;
   item.price = 0;
-
+  item.unit = "";
+  item.tags = await parseTags(item.title, item.amount, item.unit);
+  
   let listContainer = await getUserShoppingList(userId, title);
   let rlist = listContainer[0];
   // if (rlist == null) {
@@ -87,7 +92,7 @@ export const addShoppingListItems = async (userId, shoppingListName, itemsToAdd)
     // Add each item to the shopping list
     itemsToAdd.forEach(async (item) => {
       const title = item.title;
-      const amount = item.amount;
+      const amount = item.amount; 
       const existingItemIndex = shoppingList.shoppingListItems.findIndex(existingItem => existingItem.title === title);
 
       if (existingItemIndex !== -1) {

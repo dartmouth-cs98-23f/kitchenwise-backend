@@ -90,6 +90,28 @@ shoppingListRouter.put("/additem", async (req, res, next) => {
   }
 });
 
+shoppingListRouter.delete('/deletelist', async (req, res, next) => {
+  const { listName } = req.body;
+  console.log(req.body)
+  try {
+    // Find the shopping list by ID and delete it
+    // Find the shopping list by name and delete it
+    const deletedList = await ShoppingList.findOneAndDelete({ title: listName });
+    console.log(listName)
+    if (!deletedList) {
+      // If the shopping list was not found, return a 404 status
+      return res.status(404).json({ message: 'Shopping list not found' });
+    }
+
+    // Return a success message
+    return res.json({ message: 'Shopping list deleted successfully' });
+  } catch (error) {
+    // Return an error message if something went wrong
+    console.error('Error deleting shopping list:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 shoppingListRouter.delete("/delete", async (req, res, next) => {
   const { userId, title, itemId } = req.body;
 
@@ -143,13 +165,12 @@ shoppingListRouter.post("/export", async (req, res, next) => {
         const foodItem = new FoodItem({
           name: title,
           quantity: amount,
-          // You may want to adjust the unit, tags, and expirationDate based on your requirements
         });
         inventory.foodItems.push(foodItem);
       }
 
       // Clear the shopping list item from the shopping list
-      await deleteItemFromList(listName, title); // Assuming 'deleteItemFromList' function exists
+      await deleteItemFromList(listName, title); 
     }
 
     // Save the inventory with the new foodItems
@@ -197,7 +218,7 @@ shoppingListRouter.post("/import", async (req, res) => {
     const itemsToAdd = [];
     itemScores.forEach((score, itemName) => {
       if (score >= 3) {
-        // Change the threshold as needed
+        // TODO: might need to change threshold 
         // Find the most recently used quantity from addActions
         const mostRecentAddAction = addActions
           .filter((addAction) => addAction.foodItem.name === itemName)
