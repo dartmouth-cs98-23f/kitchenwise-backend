@@ -23,10 +23,10 @@ const SPOONACULAR_AUTH = {
 
 export const getStatistics = async (userId) => {
   // use existing statistics if updated less than a month ago
-  const existingStatistics = await useExistingStatistics(userId);
-  if (existingStatistics){
-    return existingStatistics.statistics;
-  }
+  // const existingStatistics = await useExistingStatistics(userId);
+  // if (existingStatistics){
+  //   return existingStatistics.statistics;
+  // }
 
   const allAddActions = await getValidAddActions(userId);
   const allRemoveActions = await getValidRemoveActions(userId);
@@ -234,7 +234,7 @@ export const getPeakActionMonth = async (userId, actions, statsId) => {
      });
 
     let maxActions = 0;
-    let peakMonth = null;
+    let peakMonth = getCapitalizedMonth(Date.now());
     for (const monthYear in actionsByMonth) {
       if (actionsByMonth[monthYear] > maxActions) {
         maxActions = actionsByMonth[monthYear];
@@ -307,7 +307,13 @@ export const getUserRankingsPercent = async (userId) => {
     const currentUserIndex = 1 + sortedUsers.findIndex(([userId]) => userId.toString() === userId.toString());
 
     // Calculate percentile for the current user
-    const percentile = (currentUserIndex / sortedUsers.length) * 100;
+    let percentile;
+    if (sortedUsers.length <= 0){
+      percentile = 100;
+    }
+    else{
+      percentile = (currentUserIndex / sortedUsers.length) * 100;
+    }
 
     const statistic = new Statistic({
       statisticId: 7,
