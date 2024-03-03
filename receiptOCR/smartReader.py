@@ -8,29 +8,33 @@ import json
 import io
 import base64
 import os
+import sys
 from dotenv import load_dotenv
+
 # OPENAI KEY from environment
 
 
 def convert_image(input_path):
-    
+
     image = cv2.imread(input_path)
 
     if image is None or image.size == 0:
         # Check if the file is a HEIC file
-        if input_path.lower().endswith('.heic'):
+        if input_path.lower().endswith(".heic"):
             # Use pillow_heif to open HEIC files
-            image = pillow_heif.read_heif(input_path, convert_hdr_to_8bit=False, bgr_mode=False)
+            image = pillow_heif.read_heif(
+                input_path, convert_hdr_to_8bit=False, bgr_mode=False
+            )
         else:
             print("Error: Image Type Not Supported.")
             quit()
     else:
         # For other image formats, use Pillow directly
         image = Image.open(input_path)
-    
+
     open_cv_image = np.array(image)
     open_cv_image = cv2.cvtColor(open_cv_image, cv2.COLOR_RGB2BGR)
-    
+
     # Return image as a BGR file
     return open_cv_image
 
@@ -57,8 +61,8 @@ def greyScale(imageFile):
 
 def sharpenContrast(imageFile, contrastAlpha=1.05, brightnessBeta=3):
     # Define alpha and beta for contrast and brightness
-    alpha = contrastAlpha # Contrast control
-    beta = brightnessBeta # Brightness control
+    alpha = contrastAlpha  # Contrast control
+    beta = brightnessBeta  # Brightness control
 
     # Call convertScaleAbs function to adjust contrast and brightness
     adjusted = cv2.convertScaleAbs(imageFile, alpha=alpha, beta=beta)
@@ -73,7 +77,7 @@ def imageProcessor(imageFile):
 
     # Greyscales it
     image = greyScale(image)
-    
+
     # Sharpens blacks and whites for easier reading
     image = sharpenContrast(image)
 
@@ -91,24 +95,25 @@ def imageProcessor(imageFile):
 def encode_image(image_path):
     # We must convert the cv2 file into a file type.
     # Encode the image to a memory buffer as PNG
-    success, buffer = cv2.imencode('.png', image_path)
+    success, buffer = cv2.imencode(".png", image_path)
 
     if not success:
         print("Could not encode image.")
     else:
         # Convert the buffer to a BytesIO file-like object
         image_file_like = io.BytesIO(buffer)
-    
+
     # Reset the pointer of the BytesIO object to the beginning
     image_file_like.seek(0)
 
     # Create a temporary file and write the BytesIO content to it
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_file:
         tmp_file.write(image_file_like.getvalue())
         tmp_file_path = tmp_file.name
 
     with open(tmp_file_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode('utf-8')
+        return base64.b64encode(image_file.read()).decode("utf-8")
+
 
 # OpenAI API
 def visionAPI(base64_image):
@@ -120,35 +125,36 @@ def visionAPI(base64_image):
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
     headers = {
-    "Content-Type": "application/json",
-    "Authorization": f"Bearer {OPENAI_API_KEY}"
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {OPENAI_API_KEY}",
     }
 
     payload = {
-    "model": "gpt-4-vision-preview",
-    "messages": [
-        {
-        "role": "user",
-        "content": [
+        "model": "gpt-4-vision-preview",
+        "messages": [
             {
-            "type": "text",
-            "text": "What are the food items and quantities in this receipt? Combine multiple quantities if needed. Get units if possible. Return a dictionary. Do not include explanations or comments."
-            },
-            {
-            "type": "image_url",
-            "image_url": {
-                "url": f"data:image/jpeg;base64,{base64_image}"
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "What are the food items and quantities in this receipt? Combine multiple quantities if needed. Get units if possible. Return a dictionary. Do not include explanations or comments.",
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+                    },
+                ],
             }
-            }
-        ]
-        }
-    ],
-    "max_tokens": 300
+        ],
+        "max_tokens": 300,
     }
 
-    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+    response = requests.post(
+        "https://api.openai.com/v1/chat/completions", headers=headers, json=payload
+    )
 
     return response.json()
+
 
 # Results
 def parseData(filename):
@@ -163,7 +169,7 @@ def parseData(filename):
     vision = visionAPI(base64_image)
 
     # Extracting the 'content' field from the first item in 'choices'
-    content_str = vision['choices'][0]['message']['content']
+    content_str = vision["choices"][0]["message"]["content"]
 
     content_str = content_str.strip()
 
@@ -189,4 +195,26 @@ def parseData(filename):
         print("Content causing error:", content_str)
 
     # Return the dictionary
-    return(items_dict)
+    return items_dict
+
+
+def writeItemDict(dict, image_uri):
+    json_string = json.dumps(dict)
+    json_uri = ".".split(image_uri)[0] + ".json"
+    f = open(json_uri, "x")
+    f.write(json_string)
+    f.close()
+
+
+def main(argv):
+    if len(argv) != 1:
+        print("Usage: `python ./smartReader.py <image_uri>")
+        return
+    image_uri = argv[0]
+    items_dict = parseData(image_uri)
+    writeItemDict(items_dict, image_uri)
+    return 0
+
+
+if __name__ == "__main__":
+    main(sys.argv)
