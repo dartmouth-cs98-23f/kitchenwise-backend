@@ -48,13 +48,14 @@ export const getAllUserInventoryItems = async (userId) => {
   return allFoodItems;
 };
 
-export const addShoppingListItem= async (userId, title, foodItem, foodAmount) => {
+export const addShoppingListItem= async (userId, title, foodItem, foodAmount, unit) => {
   const item = new ShoppingListItem();
+  console.log(unit)
   item.title = foodItem;
   item.amount = foodAmount;
   item.importance = 0;
   item.price = 0;
-  item.unit = "";
+  item.unit = unit;
   item.tags = await parseTags(item.title, item.amount, item.unit);
   
   let listContainer = await getUserShoppingList(userId, title);

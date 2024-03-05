@@ -77,13 +77,15 @@ shoppingListRouter.get("/import", async (req, res, next) => {
 
 shoppingListRouter.put("/additem", async (req, res, next) => {
   try {
-    const { userId, title, foodItem, foodAmount } = req.body;
+    const { userId, title, foodItem, foodAmount, unit} = req.body;
     const items = await addShoppingListItem(
       userId,
       title,
       foodItem,
-      foodAmount
+      foodAmount,
+      unit
     );
+    
     res.json(items).end();
   } catch (err) {
     next(err);
@@ -135,6 +137,7 @@ shoppingListRouter.delete("/delete", async (req, res, next) => {
 
 // Route to handle exporting shopping list items to an inventory
 shoppingListRouter.post("/export", async (req, res, next) => {
+  console.log(req.body)
   const { userId, listName, items, inv } = req.body;
   let inventoryName = inv.title;
   try {
