@@ -77,7 +77,7 @@ shoppingListRouter.get("/import", async (req, res, next) => {
 
 shoppingListRouter.put("/additem", async (req, res, next) => {
   try {
-    const { userId, title, foodItem, foodAmount, unit} = req.body;
+    const { userId, title, foodItem, foodAmount, unit } = req.body;
     const items = await addShoppingListItem(
       userId,
       title,
@@ -85,32 +85,32 @@ shoppingListRouter.put("/additem", async (req, res, next) => {
       foodAmount,
       unit
     );
-    
+
     res.json(items).end();
   } catch (err) {
     next(err);
   }
 });
 
-shoppingListRouter.delete('/deletelist', async (req, res, next) => {
+shoppingListRouter.delete("/deletelist", async (req, res, next) => {
   const { listName } = req.body;
-  console.log(req.body)
   try {
     // Find the shopping list by ID and delete it
     // Find the shopping list by name and delete it
-    const deletedList = await ShoppingList.findOneAndDelete({ title: listName });
-    console.log(listName)
+    const deletedList = await ShoppingList.findOneAndDelete({
+      title: listName,
+    });
     if (!deletedList) {
       // If the shopping list was not found, return a 404 status
-      return res.status(404).json({ message: 'Shopping list not found' });
+      return res.status(404).json({ message: "Shopping list not found" });
     }
 
     // Return a success message
-    return res.json({ message: 'Shopping list deleted successfully' });
+    return res.json({ message: "Shopping list deleted successfully" });
   } catch (error) {
     // Return an error message if something went wrong
-    console.error('Error deleting shopping list:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error("Error deleting shopping list:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -137,7 +137,6 @@ shoppingListRouter.delete("/delete", async (req, res, next) => {
 
 // Route to handle exporting shopping list items to an inventory
 shoppingListRouter.post("/export", async (req, res, next) => {
-  console.log(req.body)
   const { userId, listName, items, inv } = req.body;
   let inventoryName = inv.title;
   try {
@@ -173,7 +172,7 @@ shoppingListRouter.post("/export", async (req, res, next) => {
       }
 
       // Clear the shopping list item from the shopping list
-      await deleteItemFromList(listName, title); 
+      await deleteItemFromList(listName, title);
     }
 
     // Save the inventory with the new foodItems
@@ -221,7 +220,7 @@ shoppingListRouter.post("/import", async (req, res) => {
     const itemsToAdd = [];
     itemScores.forEach((score, itemName) => {
       if (score >= 3) {
-        // TODO: might need to change threshold 
+        // TODO: might need to change threshold
         // Find the most recently used quantity from addActions
         const mostRecentAddAction = addActions
           .filter((addAction) => addAction.foodItem.name === itemName)

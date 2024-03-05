@@ -5,17 +5,14 @@ import InventoryAddAction from "../models/InventoryAddAction.js";
 import InventoryRemoveAction from "../models/InventoryRemoveAction.js";
 import { parseTags } from "./fooditem-service.js";
 
-
-
 export const createNewShoppingList = async (listTitle, userId) => {
   const list = new ShoppingList();
   list.title = listTitle;
   list.ownerId = new Types.ObjectId(userId);
 
-  const savedList = await list.save()
+  const savedList = await list.save();
   return savedList;
 };
-
 
 export const getUserShoppingLists = async (userId) => {
   const lists = await ShoppingList.find({
@@ -24,12 +21,11 @@ export const getUserShoppingLists = async (userId) => {
   return lists;
 };
 
-
 export let getUserShoppingList = async (userId, listTitle) => {
   try {
     const list = await ShoppingList.find({
       ownerId: new Types.ObjectId(userId),
-      title: listTitle
+      title: listTitle,
     });
     return list;
   } catch (error) {
@@ -48,16 +44,21 @@ export const getAllUserInventoryItems = async (userId) => {
   return allFoodItems;
 };
 
-export const addShoppingListItem= async (userId, title, foodItem, foodAmount, unit) => {
+export const addShoppingListItem = async (
+  userId,
+  title,
+  foodItem,
+  foodAmount,
+  unit
+) => {
   const item = new ShoppingListItem();
-  console.log(unit)
   item.title = foodItem;
   item.amount = foodAmount;
   item.importance = 0;
   item.price = 0;
   item.unit = unit;
   item.tags = await parseTags(item.title, item.amount, item.unit);
-  
+
   let listContainer = await getUserShoppingList(userId, title);
   let rlist = listContainer[0];
   // if (rlist == null) {
@@ -68,7 +69,7 @@ export const addShoppingListItem= async (userId, title, foodItem, foodAmount, un
   for (let i = 0; i < rlist.shoppingListItems.length; i++) {
     let title = rlist.shoppingListItems[i].title;
     if (title === item.title) {
-      rlist.shoppingListItems[i].amount += item.amount
+      rlist.shoppingListItems[i].amount += item.amount;
       flag = 0;
     }
   }
@@ -81,20 +82,29 @@ export const addShoppingListItem= async (userId, title, foodItem, foodAmount, un
   return rlist;
 };
 
-export const addShoppingListItems = async (userId, shoppingListName, itemsToAdd) => {
+export const addShoppingListItems = async (
+  userId,
+  shoppingListName,
+  itemsToAdd
+) => {
   try {
     // Find the shopping list by name
-    const shoppingList = await ShoppingList.findOne({ ownerId: userId, title: shoppingListName });
+    const shoppingList = await ShoppingList.findOne({
+      ownerId: userId,
+      title: shoppingListName,
+    });
 
     if (!shoppingList) {
-      return { success: false, message: 'Shopping list not found' };
+      return { success: false, message: "Shopping list not found" };
     }
 
     // Add each item to the shopping list
     itemsToAdd.forEach(async (item) => {
       const title = item.title;
-      const amount = item.amount; 
-      const existingItemIndex = shoppingList.shoppingListItems.findIndex(existingItem => existingItem.title === title);
+      const amount = item.amount;
+      const existingItemIndex = shoppingList.shoppingListItems.findIndex(
+        (existingItem) => existingItem.title === title
+      );
 
       if (existingItemIndex !== -1) {
         // If the item exists, update its quantity
@@ -105,28 +115,28 @@ export const addShoppingListItems = async (userId, shoppingListName, itemsToAdd)
       }
     });
 
-
     return await shoppingList.save();
   } catch (error) {
     console.error(error);
-    return { success: false, message: 'Internal server error' };
+    return { success: false, message: "Internal server error" };
   }
 };
-                       
 
 export const deleteItemFromList = async (shoppingListName, itemName) => {
-   // Find the shopping list by name
-   const shoppingList = await ShoppingList.findOne({ title: shoppingListName });
-  
+  // Find the shopping list by name
+  const shoppingList = await ShoppingList.findOne({ title: shoppingListName });
+
   if (!shoppingList) {
-    return { status: 400, message: 'Shopping list not found' };
+    return { status: 400, message: "Shopping list not found" };
   }
 
   // Find the index of the item to delete
-  const index = shoppingList.shoppingListItems.findIndex(item => item.title.toString() === itemName);
+  const index = shoppingList.shoppingListItems.findIndex(
+    (item) => item.title.toString() === itemName
+  );
 
   if (index === -1) {
-    return { status: 400, message: 'Item not found in shopping list' };
+    return { status: 400, message: "Item not found in shopping list" };
   }
 
   // Remove the item from the shoppingListItems array
@@ -135,14 +145,12 @@ export const deleteItemFromList = async (shoppingListName, itemName) => {
   // If the shopping list is empty, delete the shopping list
   if (shoppingList.shoppingListItems.length === 0) {
     await ShoppingList.deleteOne({ _id: shoppingList._id });
-    return { status: 200, message: 'Item deleted and shopping list is now empty' };
+    return {
+      status: 200,
+      message: "Item deleted and shopping list is now empty",
+    };
   }
 
   // Save the updated shopping list
   await shoppingList.save();
 };
-
-
-
-
-
