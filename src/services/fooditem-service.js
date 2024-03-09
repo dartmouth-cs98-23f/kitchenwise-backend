@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import { wordsToNumbers } from "words-to-numbers";
 dotenv.config();
 
-const SPOONACULAR_API_KEY = "255db590eb8145b4925f85ea92966f0c"//process.env.SPOONACULAR_API_KEY;
+const SPOONACULAR_API_KEY = process.env.SPOONACULAR_API_KEY; //process.env.SPOONACULAR_API_KEY;
 const SPOONACULAR_URL = "https://api.spoonacular.com/recipes";
 
 const SPOONACULAR_AUTH = {
