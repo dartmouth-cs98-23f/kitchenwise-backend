@@ -200,19 +200,24 @@ def parseData(filename):
 
 def writeItemDict(dict, image_uri):
     json_string = json.dumps(dict)
-    json_uri = ".".split(image_uri)[0] + ".json"
+    json_uri = image_uri.split(".")[0] + ".json"
     f = open(json_uri, "x")
     f.write(json_string)
     f.close()
+    return json_uri
 
 
 def main(argv):
-    if len(argv) != 1:
+    if len(argv) != 2:
         print("Usage: `python ./smartReader.py <image_uri>")
-        return
-    image_uri = argv[0]
+        return 1
+    image_uri = argv[1]
     items_dict = parseData(image_uri)
-    writeItemDict(items_dict, image_uri)
+    if (not items_dict) or len(items_dict) == 0:
+        sys.stderr.write("No items could be extracted")
+        return 1
+    json_uri = writeItemDict(items_dict, image_uri)
+    sys.stdout.write(json_uri)
     return 0
 
 

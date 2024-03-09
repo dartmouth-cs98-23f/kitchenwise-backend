@@ -1,5 +1,6 @@
 import express from "express";
 import multer from "multer";
+import path from "path";
 import {
   getUserDefaultInventory,
   getInventoryFromFood,
@@ -9,6 +10,7 @@ import {
   locationNameToInventory,
 } from "../services/inventory-service.js";
 import { createAddAction } from "../services/addaction-service.js";
+import { parseReceipt } from "../services/fooditem-service.js";
 
 // Even though FoodItem isn't a proper model, we give it its own router because these functions interact with many models
 const foodItemRouter = express.Router();
@@ -97,10 +99,8 @@ foodItemRouter.post(
   "/scanreceipt",
   upload.single("receipt"),
   async (req, res, next) => {
-    console.log(req);
     try {
-      console.log(req.file);
-      // TODO: execute CLI call and pull from JSON result
+      await parseReceipt(path.resolve(req.file.path), req.body.userId);
     } catch (err) {
       next(err);
     }
