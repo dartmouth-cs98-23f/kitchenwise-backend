@@ -19,7 +19,14 @@ const storage = multer.diskStorage({
     callback(null, "./receipts");
   },
   filename(req, file, callback) {
-    callback(null, `${file.fieldname}_${Date.now()}_${file.originalname}`);
+    let extension = "";
+    if (file.mimetype === "image/jpeg") {
+      extension = ".jpeg";
+    }
+    callback(
+      null,
+      `${file.fieldname}_${Date.now()}_${file.originalname}${extension}`
+    );
   },
 });
 
@@ -90,6 +97,7 @@ foodItemRouter.post(
   "/scanreceipt",
   upload.single("receipt"),
   async (req, res, next) => {
+    console.log(req);
     try {
       console.log(req.file);
       // TODO: execute CLI call and pull from JSON result
