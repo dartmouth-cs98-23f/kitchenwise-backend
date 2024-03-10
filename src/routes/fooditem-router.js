@@ -101,6 +101,7 @@ foodItemRouter.post(
   async (req, res, next) => {
     try {
       await parseReceipt(path.resolve(req.file.path), req.body.userId);
+      res.end();
     } catch (err) {
       next(err);
     }
