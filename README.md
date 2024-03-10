@@ -1,24 +1,30 @@
 # kitchenwise-backend
 
-![THE_BOYS](https://github.com/dartmouth-cs98-23f/project-embedded-pantry/assets/90659949/cf96b595-a592-4b15-9057-54b348b2463f)
-
-TODO: short project description, some sample screenshots or mockups
+Backend for our revolutionary voice-based kitchen management platform.
 
 ## Architecture
 
-TODO: descriptions of code organization and tools and libraries used
+- Node.js/Express
+- MongoDB + Mongoose
+- Python receipt scanning submodule
+
+## Prerequisites
+
+- Nodejs
+- MongoDB database (local or remote)
 
 ## Setup
 
-1. Install packages with `npm i`
+1. Install packages with `yarn`
 2. Add a .env file with the following vars:
-   - `DATABASE_URL=<your mongo url here>`
-   - `SPOONACULAR_API_KEY=<your key for Spoonacular recipe API here>`
+   - `DATABASE_URL=<your Mongo URI here>`
+   - `SPOONACULAR_API_KEY=<your Spoonacular key here>`
+   - `OPENAI_API_KEY = <your OpenAI API key here>`
 3. Run `npm start`
 
 ## Deployment
 
-TODO: how to deploy the project
+We have a Render app set up that continuously deploys from Github.
 
 ## Authors
 
@@ -29,3 +35,5 @@ Julian George <br>
 Brian Zhang
 
 ## Acknowledgments
+
+We use Spoonacular's API for food tagging.
