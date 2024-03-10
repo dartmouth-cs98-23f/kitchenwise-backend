@@ -74,10 +74,6 @@ export const parseReceipt = async (imageUri, userId) => {
 
   const addActionCreations = [];
   for (const [itemName, quantity] of Object.entries(parsedObj)) {
-    console.log({
-      name: itemName.toLocaleLowerCase(),
-      quantity: Math.ceil(quantity),
-    });
     addActionCreations.push(
       createAddAction(
         {
