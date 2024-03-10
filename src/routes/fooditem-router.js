@@ -1,4 +1,6 @@
 import express from "express";
+import multer from "multer";
+import path from "path";
 import {
   getUserDefaultInventory,
   getInventoryFromFood,
@@ -8,9 +10,29 @@ import {
   locationNameToInventory,
 } from "../services/inventory-service.js";
 import { createAddAction } from "../services/addaction-service.js";
+import { parseReceipt } from "../services/fooditem-service.js";
 
 // Even though FoodItem isn't a proper model, we give it its own router because these functions interact with many models
 const foodItemRouter = express.Router();
+
+// multer boilerplate from https://www.reactnativeschool.com/how-to-upload-images-from-react-native
+const storage = multer.diskStorage({
+  destination(req, file, callback) {
+    callback(null, "./receipts");
+  },
+  filename(req, file, callback) {
+    let extension = "";
+    if (file.mimetype === "image/jpeg") {
+      extension = ".jpeg";
+    }
+    callback(
+      null,
+      `${file.fieldname}_${Date.now()}_${file.originalname}${extension}`
+    );
+  },
+});
+
+const upload = multer({ storage });
 
 foodItemRouter.post("/additem", async (req, res, next) => {
   try {
@@ -72,6 +94,19 @@ foodItemRouter.post("/additems", async (req, res, next) => {
     next(err);
   }
 });
+
+foodItemRouter.post(
+  "/scanreceipt",
+  upload.single("receipt"),
+  async (req, res, next) => {
+    try {
+      await parseReceipt(path.resolve(req.file.path), req.body.userId);
+      res.end();
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 foodItemRouter.delete("/deleteitem", async (req, res, next) => {
   try {

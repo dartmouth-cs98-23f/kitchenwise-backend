@@ -10,7 +10,7 @@ export const getInventoryById = async (inventoryId) => {
 export const getUserDefaultInventory = async (userId) => {
   const inventory = await Inventory.findOne({
     ownerId: new Types.ObjectId(userId),
-    default: true,
+    // default: true,
   });
   if (!inventory) return null;
   return inventory;

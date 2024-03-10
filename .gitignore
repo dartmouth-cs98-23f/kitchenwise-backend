@@ -7,3 +7,4 @@ dist
 cached-recipes.json
 yarn.lock
 package-lock.json
+receipts/*
