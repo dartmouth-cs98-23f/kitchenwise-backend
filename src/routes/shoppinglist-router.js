@@ -170,7 +170,7 @@ shoppingListRouter.post("/export", async (req, res, next) => {
           quantity: amount,
           unit: unit,
           tags: tags,
-          inv: inventory.title,
+          inventory: inventory.title,
         });
         inventory.foodItems.push(foodItem);
       }
@@ -201,7 +201,7 @@ shoppingListRouter.post("/import", async (req, res) => {
     if (addActions.length < 1 || removeActions.length < 1) {
       return res
         .status(400)
-        .json({ message: "No User History, add items manualy" });
+        .json({ message: "No User History, add items manually" });
     }
 
     // Initialize a map to store item scores based on their names
