@@ -152,7 +152,8 @@ shoppingListRouter.post("/export", async (req, res, next) => {
 
     // Iterate over each item and add it to the inventory
     for (const item of req.body.items) {
-      const { title, amount, price, importance } = item;
+      console.log(item);
+      const { title, amount, price, importance, unit, tags } = item;
 
       // Check if an item with the same name and title exists
       const existingItemIndex = inventory.foodItems.findIndex(
@@ -167,6 +168,9 @@ shoppingListRouter.post("/export", async (req, res, next) => {
         const foodItem = new FoodItem({
           name: title,
           quantity: amount,
+          unit: unit,
+          tags: tags,
+          inv: inventory.title,
         });
         inventory.foodItems.push(foodItem);
       }
