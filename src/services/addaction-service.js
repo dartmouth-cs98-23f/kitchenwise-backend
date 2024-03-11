@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import InventoryAddAction from "../models/InventoryAddAction.js";
-import { addFoodItem } from "./inventory-service.js";
+import { addFoodItem, getInventoryById } from "./inventory-service.js";
 import { parseFoodItem, parseTags } from "./fooditem-service.js";
 
 export const getAddActionById = async (addActionId) => {
@@ -41,6 +41,7 @@ export const createAddAction = async (food, inventoryId, userId) => {
     newFoodItem.quantity,
     newFoodItem.unit
   );
+  newFoodItem.inventory = (await getInventoryById(inventoryId)).title;
 
   const newAddAction = new InventoryAddAction({
     ownerId: new Types.ObjectId(userId),
